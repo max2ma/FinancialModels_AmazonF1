@@ -1,0 +1,33 @@
+COMMON_REPO :=/home/liang/WORKSPACE/AWS/aws-fpga/SDAccel/examples/xilinx/
+
+#Common Includes
+include $(COMMON_REPO)/utility/boards.mk
+include $(COMMON_REPO)/libs/xcl2/xcl2.mk
+include $(COMMON_REPO)/libs/opencl/opencl.mk
+
+# Host Application
+run_heston_SRCS=main.cpp $(oclHelper_SRCS) $(xcl2_SRCS)
+run_heston_HDRS=$(xcl2_HDRS)
+run_heston_CXXFLAGS=-I../common/ $(opencl_CXXFLAGS) $(xcl2_CXXFLAGS) $(oclHelper_CXXFLAGS) -std=c++0x
+run_heston_LDFLAGS=$(opencl_LDFLAGS)
+
+EXES=run_heston
+
+# Kernel
+hestonEuroBarrier_SRCS=hestonBarrier.cpp ../common/stockData.cpp ../common/volatilityData.cpp ../common/RNG.cpp ../common/barrierData.cpp
+
+XOS=hestonEuroBarrier
+
+hestonEuroBarrier_XOS=hestonEuroBarrier
+
+XCLBINS=hestonEuroBarrier
+CLFLAGS=-I../common/ --kernel hestonEuroBarrier --xp "param:compiler.preserveHlsOutput=1" --xp "param:compiler.generateExtraRunData=true" -s 
+# check
+check_EXE=run_heston
+check_XCLBINS=hestonEuroBarrier
+
+CHECKS=check
+
+include $(COMMON_REPO)/utility/rules.mk
+
+# -a heston.xclbin -p 0.887 -c 0.776 -n hestonBarrier
