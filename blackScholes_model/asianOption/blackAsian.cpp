@@ -22,9 +22,9 @@
 *
 *----------------------------------------------------------------------------
 */
-#include "../common/defTypes.h"
-#include "../common/stockData.h"
-#include "../common/blackScholes.h"
+#include "defTypes.h"
+#include "stockData.h"
+#include "blackScholes.h"
 
 
 extern "C"

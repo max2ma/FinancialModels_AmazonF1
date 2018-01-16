@@ -28,7 +28,7 @@
 *
 *----------------------------------------------------------------------------
 */
-#include "../common/blackScholes.h"
+#include "blackScholes.h"
 
 const int blackScholes::NUM_RNGS=64;
 const int blackScholes::NUM_SIMS=512;
