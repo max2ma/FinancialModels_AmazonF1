@@ -1,0 +1,3 @@
+[submodule "SDAccel_Examples"]
+	path = SDAccel_Examples
+	url = git@github.com:Xilinx/SDAccel_Examples.git
