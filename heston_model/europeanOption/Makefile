@@ -1,4 +1,3 @@
-COMMON_REPO=../../SDAccel_Examples
 COMMON_DIR:=../../common/
 
 #Common Includes
