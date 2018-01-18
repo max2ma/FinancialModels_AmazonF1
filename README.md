@@ -8,11 +8,11 @@ Few modifications are made in order to implement them on the Amazon F1.
 reference to https://github.com/aws/aws-fpga/tree/master/SDAccel
 - checkout the Amazon [AWS-FPGA](https://github.com/aws/aws-fpga) by
     ```
-    git clone --recursive git@github.com:aws/aws-fpga.git
+    $ git clone --recursive git@github.com:aws/aws-fpga.git
     ```
   or
     ```
-    git clone --recursive https://github.com/aws/aws-fpga.git
+    $ git clone --recursive https://github.com/aws/aws-fpga.git
     ```
 - set the environment as following
   ```
@@ -26,8 +26,14 @@ reference to https://github.com/aws/aws-fpga/tree/master/SDAccel
   ```
   $ make TARGETS=hw DEVICES=$AWS_PLATFORM all
   ```
- - Create an Amazon FPGA Image (AFI) by create_sdaccel_afi.sh
+ - Create an Amazon FPGA Image (AFI) by 
+   ```
+   $ $SDACCEL_DIR/tools/create_sdaccel_afi.sh -xclbin=xclbin/<kernel name>.hw.$PLATFORM.xclbin -o=<kernel name>.hw.$PLATFORM -s3_bucket=<bucket name> -s3_dcp_key=dcp_folder -s3_logs_key=logs
+   ```
  - Tracking the status of the registered AFI until available
+   ```
+   $ aws ec2 describe-fpga-images --fpga-image-ids <AFI ID>
+   ```
  - Run the FPGA accelerated application on F1
 
 ## Performance
