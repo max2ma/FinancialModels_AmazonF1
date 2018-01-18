@@ -21,7 +21,7 @@
 *
 * ML_cl.h is the OpenCL library file <CL/cl.hpp>. Currently the version shipped with SDAccel is buggy.
 *
-* Exception handling is enabled (__CL_ENABLE_EXCEPTIONS) to make host code simpler.
+* Exception handling is enabled (CL_HPP_ENABLE_EXCEPTIONS) to make host code simpler.
 *
 * The global and local size are set to 1 since the kernel is written in C/C++ instead of OpenCL.
 *
@@ -44,7 +44,7 @@
 *----------------------------------------------------------------------------
 */
 
-#define __CL_ENABLE_EXCEPTIONS
+#define CL_HPP_ENABLE_EXCEPTIONS
 
 // This should be used when cl.hpp from SDAccel works.
 //#include <CL/cl.hpp>
