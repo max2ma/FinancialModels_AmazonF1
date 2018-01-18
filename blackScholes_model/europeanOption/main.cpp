@@ -19,7 +19,7 @@
 *
 * Host code defining all the parameters and launching the kernel. 
 *
-* Exception handling is enabled (__CL_ENABLE_EXCEPTIONS) to make host code simpler.
+* Exception handling is enabled (CL_HPP_ENABLE_EXCEPTIONS) to make host code simpler.
 *
 * The global and local size are set to 1 since the kernel is written in C/C++ instead of OpenCL.
 *
