@@ -36,7 +36,7 @@ reference to https://github.com/aws/aws-fpga/tree/master/SDAccel
    ```
  - Run the FPGA accelerated application on F1
 
-| Models | Options | Example arguments |
+| Models | Options | Example arguments for host |
 | - | - | - |
 | Black-Scholes | European option |-a <binary_name> -n blackEuro -s 100 -k 110 -r 0.05 -v 0.2 -t 1 -c 6.04 -p 10.65|
 | Black-Scholes | Asian option |-a <binary_name> -n blackAsian -s 100 -k 105 -r 0.1 -v 0.15 -t 10 -c 24.95 -p 0.283|
@@ -55,7 +55,10 @@ Target device is 'xcvu9p-flgb2104-2-i'
 | Heston | European option |32|2^{24}|256|1.52|1.14|15% |2.2%|8.2%|8.2%| 26%|
 | Heston | European barrier option |32|2^{23}|256|0.75|0.56|14%|2.3%|7.8%|8.0%|26%|
 
-Taking the first application as an example, there initialized 64 random number generator which run in parallel. For 2^31 path simulations, it takes 0.2s on the FPGA. The resource utilization is no more than 43%. So at least 2x performamnce can be achieved on this device. 
+The execution time for black-scholes model could be estimated by: no.paths * no.partitions * clock_period / no.random_number_generator
+The execution time for heston model could be estimated by: 2 * no.paths * no.partitions * clock_period / no.random_number_generator
+
+Taking the first application as an example, there initialized 64 random number generator which run in parallel. For 2^31 path simulations, it takes 0.2s on the FPGA. The resource utilization is no more than 43%. So at least 2x performamnce can be achieved on this device. The actual execution time is about 30% more than the estimated time by the synthesizer. 
 
 Further optimization can be found in the paper [High Performance and Low Power Monte Carlo Methods to Option Pricing Models via High Level Design and Synthesis](http://ieeexplore.ieee.org/abstract/document/7920245/).
 
@@ -69,4 +72,3 @@ Further optimization can be found in the paper [High Performance and Low Power M
 | Heston | European barrier option |2^{20}|256|27|
 
 For the first application, it takes around 140s for 2^31 path simulations on the CPU. So the FPGA can achieve at least 3 order of magnitude faster performance than the CPU. 
-
