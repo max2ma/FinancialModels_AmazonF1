@@ -6,10 +6,10 @@ include $(COMMON_REPO)/libs/xcl2/xcl2.mk
 include $(COMMON_REPO)/libs/opencl/opencl.mk
 
 # Host Application
-run_bs_SRCS=main.cpp $(oclHelper_SRCS) $(xcl2_SRCS)
+run_bs_SRCS=main.cpp $(COMMON_DIR)/bs.pb.cc $(oclHelper_SRCS) $(xcl2_SRCS)
 run_bs_HDRS=$(xcl2_HDRS)
-run_bs_CXXFLAGS=-I$(COMMON_DIR) $(opencl_CXXFLAGS) $(xcl2_CXXFLAGS) $(oclHelper_CXXFLAGS) -std=c++0x
-run_bs_LDFLAGS=$(opencl_LDFLAGS)
+run_bs_CXXFLAGS=-I$(COMMON_DIR) $(opencl_CXXFLAGS) $(xcl2_CXXFLAGS) $(oclHelper_CXXFLAGS) -std=c++0x -O3
+run_bs_LDFLAGS=$(opencl_LDFLAGS) -lprotobuf
 
 EXES=run_bs
 
