@@ -1,0 +1,6 @@
+initPrice: 100
+strikePrice: 110
+rate: 0.05
+volatility: 0.2
+time: 1
+kernel_name: "blackEuro"
