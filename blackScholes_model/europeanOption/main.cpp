@@ -47,9 +47,13 @@
 #include <fstream>
 #include <cstdlib>
 #include <cmath>
+#include <cstring>
 #include <unistd.h>
 #include <ctime>
 #include "xcl2.hpp"
+
+#include "bs.pb.h"
+#include <google/protobuf/text_format.h>
 using namespace std;
 
 namespace Params 
@@ -59,19 +63,13 @@ namespace Params
 	double rate = 0.05;   		// -r
 	double volatility = 0.2;	// -v
 	double T = 1.0;			    // -t
-	char *kernel_name="balckEuro";     // -n
+	char *kernel_name="blackEuro";     // -n
 	char *binary_name="*.xclbin";     // -a
 }
 void usage(char* name)
 {
     cout<<"Usage: "<<name
-        <<" [-a opencl_binary_name]"
-        <<" -n kernel_name"
-        <<" [-s stock_price]"
-        <<" [-k strike_price]"
-        <<" [-r rate]"
-        <<" [-v volatility]"
-        <<" [-t time]"
+        <<" -b opencl_binary_name"
         <<" [-c call_price]"
         <<" [-p put_price]"
         <<endl;
@@ -80,30 +78,12 @@ int main(int argc, char** argv)
 {
 	int opt;
 	double callR=-1, putR=-1;
-	bool flagc=false,flagp=false,flagn=false;
-	while((opt=getopt(argc,argv,"n:a:s:k:r:v:t:c:p:"))!=-1){
+	bool flagc=false,flagp=false,flagb=false;
+	while((opt=getopt(argc,argv,"b:c:p:"))!=-1){
 		switch(opt){
-			case 'n':
-				Params::kernel_name=optarg;
-				flagn=true;
-				break;
-			case 'a':
+			case 'b':
 				Params::binary_name=optarg;
-				break;
-			case 's':
-				Params::S0=atof(optarg);
-				break;
-			case 'k':
-				Params::K=atof(optarg);
-				break;
-			case 'r':
-				Params::rate=atof(optarg);
-				break;
-			case 'v':
-				Params::volatility=atof(optarg);
-				break;
-			case 't':
-				Params::T=atof(optarg);
+				flagb=true;
 				break;
 			case 'c':
 				callR=atof(optarg);
@@ -118,11 +98,22 @@ int main(int argc, char** argv)
 				return -1;
 		}
 	}
-	// Check the mandatory argument.
-	if(!flagn) {
+
+	if(!flagb){
 		usage(argv[0]);
 		return -1;
 	}
+
+	parameters::blackScholes euroBS;
+	fstream is("european.parameters", ios::in);
+	if(!is){
+		cout << "Parameter file open failed." <<endl;
+		return -1;
+	}
+	const string str(istreambuf_iterator<char>(is),
+		(istreambuf_iterator<char>()));
+	google::protobuf::TextFormat::ParseFromString(str, &euroBS);
+
 	ifstream ifstr(Params::binary_name); 
 	const string programString(istreambuf_iterator<char>(ifstr),
 		(istreambuf_iterator<char>()));
@@ -174,11 +165,11 @@ int main(int argc, char** argv)
 		cl::EnqueueArgs enqueueArgs(commandQueue,cl::NDRange(1),cl::NDRange(1));
 		cl::Event event = kernelFunctor(enqueueArgs,
 						d_call,d_put,
-						Params::T,
-						Params::rate,
-				 		Params::volatility,
-						Params::S0,
-						Params::K
+						euroBS.time(),
+						euroBS.rate(),
+						euroBS.volatility(),
+						euroBS.initprice(),
+						euroBS.strikeprice()
 						);
 
     commandQueue.enqueueMigrateMemObjects(outBufVec,CL_MIGRATE_MEM_OBJECT_HOST);
