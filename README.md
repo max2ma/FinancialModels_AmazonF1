@@ -36,6 +36,12 @@ reference to https://github.com/aws/aws-fpga/tree/master/SDAccel
    ```
  - Run the FPGA accelerated application on F1
 
+| Models | Options | Example arguments |
+| - | - | - |
+| Black-Scholes | European option |-a <binary_name> -n blackEuro -s 100 -k 110 -r 0.05 -v 0.2 -t 1 -c 6.04 -p 10.65|
+| Black-Scholes | Asian option |-a <binary_name> -n blackAsian -s 100 -k 105 -r 0.1 -v 0.15 -t 10 -c 24.95 -p 0.283|
+| Heston | European option | -a <binary_name> -n hestonEuro -p 5.9 -c 8.7|
+| Heston | European barrier option |-a <binary_name>  -n hestonEuroBarrier -p 0.887 -c 0.776"|
 ## Performance
 
 ### On Amazon F1 FPGA
@@ -63,3 +69,4 @@ Further optimization can be found in the paper [High Performance and Low Power M
 | Heston | European barrier option |2^{20}|256|27|
 
 For the first application, it takes around 140s for 2^31 path simulations on the CPU. So the FPGA can achieve at least 3 order of magnitude faster performance than the CPU. 
+
