@@ -13,6 +13,7 @@ This repository includes F1-optimized implementations of four Monte Carlo financ
 Examples of usage for the European and Asian options:
 
 > blackEuro -s 100 -k 105 -r 0.1 -v 0.15 -t 10
+
 > blackAsian -s 90 -k 110 -r 0.2 -v 0.1 -t 20
 
 Argument |  Meaning and default value
@@ -36,6 +37,7 @@ NUM_SIMS   | number of simulations running in parallel for a given RNG (512 opti
 Examples of usage for European and European with barrier options:
 
 > hestonEuro -s 256
+
 > hestonEuroBarrier -s 512
 
 Argument |  Meaning and default value
@@ -53,7 +55,7 @@ NUM_RNGS | number of RNGs running in parallel, proportional to the area cost
 Target frequency is 250MHz. 
 Target device is 'xcvu9p-flgb2104-2-i'
 
-| Models | Options | No.random number generators | No.paths | No.partitions | Execution time on F1 CPU [s] Execution time on FPGA [s] | LUT | LUTMem | REG | BRAM | DSP | 
+| Models | Options | No.random number generators | No.paths | No.partitions | Execution time on F1 CPU [s] | Execution time on FPGA [s] | LUT | LUTMem | REG | BRAM | DSP | 
 |-|-|-|-|-|-|-|-|-|-|-| -|
 | Black-Scholes | European option |64|2^{31}|1|139|0.2|25% |2.7%|13% |19% | 43%|
 | Black-Scholes | Asian option |64|2^{25}| 256|16|0.74|25%|2.2%|13%|19%|43%|
