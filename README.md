@@ -3,6 +3,7 @@
 This repository includes F1-optimized implementations of four Monte Carlo financial models, namely:
   - the European and the Asian options of the the [Black-Scholes model](https://github.com/KitAway/BlackScholes_MonteCarlo), 
   - the European and the European barrier options the [Heston model](https://github.com/KitAway/HestonModel_MonteCarlo). 
+
 (see the hyperlinks above for the mathematical theory behind them).
 
 ## Usage
