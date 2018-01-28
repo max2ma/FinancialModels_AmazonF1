@@ -11,11 +11,10 @@ This repository includes F1-optimized implementations of four Monte Carlo financ
 ### Black-Scholes kernel models
 
 Examples of usage for the European and Asian options:
-
-> blackEuro -s 100 -k 105 -r 0.1 -v 0.15 -t 10
-
-> blackAsian -s 90 -k 110 -r 0.2 -v 0.1 -t 20
-
+  ```
+  > blackEuro -s 100 -k 105 -r 0.1 -v 0.15 -t 10
+  > blackAsian -s 90 -k 110 -r 0.2 -v 0.1 -t 20
+  ```
 The outputs of both commands are the expected call and put prices.
 
 Argument |  Meaning and default value
@@ -37,11 +36,10 @@ NUM_SIMS   | number of simulations running in parallel for a given RNG (512 ensu
 ### Heston kernel models
 
 Examples of usage for European and European with barrier options:
-
-> hestonEuro -s 256
-
-> hestonEuroBarrier -s 512
-
+  ```
+  >  hestonEuro -s 256
+  > hestonEuroBarrier -s 512
+  ```
 The outputs of both commands are the expected call and put prices.
 
 Argument |  Meaning and default value
@@ -69,9 +67,15 @@ Target device is 'xcvu9p-flgb2104-2-i'
 Further informations about the optimizations used in this implementation can be found in the paper [High Performance and Low Power Monte Carlo Methods to Option Pricing Models via High Level Design and Synthesis](http://ieeexplore.ieee.org/abstract/document/7920245/).
 
 In all cases, the enclosed Makefile can be used to compile the models. For example:
-
-> cd blackScholes_model/europeanOption; make TARGETS=hw
-
+  ```
+  cd blackScholes_model/europeanOption
+  source <path to SDSoc v2017.1>/.settings64-SDx.sh
+  export SDACCEL_DIR=<path to aws-fpga>/SDAccel
+  export COMMON_REPO=$SDACCEL_DIR/examples/xilinx/
+  export PLATFORM=xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0
+  export AWS_PLATFORM=$SDACCEL_DIR/aws_platform/xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0/xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0.xpfm
+  make TARGETS=hw DEVICES=$AWS_PLATFORM all
+  ```
 compiles the code and generates the F1-targeted bitstream for the European option of the Black-Scholes model.
 
 
