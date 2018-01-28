@@ -68,4 +68,12 @@ Target device is 'xcvu9p-flgb2104-2-i'
 
 Further informations about the optimizations used in this implementation can be found in the paper [High Performance and Low Power Monte Carlo Methods to Option Pricing Models via High Level Design and Synthesis](http://ieeexplore.ieee.org/abstract/document/7920245/).
 
+In all cases, the enclosed Makefile can be used to compile the models. For example:
+
+> cd blackScholes_model/europeanOption; make TARGETS=hw
+
+compiles the code and generates the F1-targeted bitstream for the European option of the Black-Scholes model.
+
+
+
 
