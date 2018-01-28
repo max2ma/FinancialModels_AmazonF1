@@ -1,40 +1,8 @@
-# Financial Models on Amazon F1
+# Monte Carlo financial models on Amazon F1 instances
 ## Introduction
-There are two financial models in this repository, [black-scholes model](https://github.com/KitAway/BlackScholes_MonteCarlo) and [heston model](https://github.com/KitAway/HestonModel_MonteCarlo). The links bring you to the original repository of the implementations of each financial model with several options. The detail introduction of each model can also be found. 
-
-Few modifications are made in order to implement them on the Amazon F1.  
-
-## Usage: 
-reference to https://github.com/aws/aws-fpga/tree/master/SDAccel
-- checkout the Amazon [AWS-FPGA](https://github.com/aws/aws-fpga) by
-    ```
-    $ git clone --recursive git@github.com:aws/aws-fpga.git
-    ```
-  or
-    ```
-    $ git clone --recursive https://github.com/aws/aws-fpga.git
-    ```
-- set the environment as following
-  ```
-  source <path to SDSoc v2017.1>/.settings64-SDx.sh
-  export SDACCEL_DIR=<path to aws-fpga>/SDAccel
-  export COMMON_REPO=$SDACCEL_DIR/examples/xilinx/
-  export PLATFORM=xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0
-  export AWS_PLATFORM=$SDACCEL_DIR/aws_platform/xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0/xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0.xpfm
-  ```
-- go to any one project directory build the project by:
-  ```
-  $ make TARGETS=hw DEVICES=$AWS_PLATFORM all
-  ```
- - Create an Amazon FPGA Image (AFI) by 
-   ```
-   $ $SDACCEL_DIR/tools/create_sdaccel_afi.sh -xclbin=xclbin/<kernel name>.hw.$PLATFORM.xclbin -o=<kernel name>.hw.$PLATFORM -s3_bucket=<bucket name> -s3_dcp_key=dcp_folder -s3_logs_key=logs
-   ```
- - Tracking the status of the registered AFI until available
-   ```
-   $ aws ec2 describe-fpga-images --fpga-image-ids <AFI ID>
-   ```
- - Run the FPGA accelerated application on F1
+This repository includes F1-optimized implementations of four Monte Carlo financial models, namely:
+  - the European and the Asian options of the the [Black-Scholes model](https://github.com/KitAway/BlackScholes_MonteCarlo), 
+  - the European and the European barrier options the [Heston model](https://github.com/KitAway/HestonModel_MonteCarlo). 
 
 ## Performance
 
