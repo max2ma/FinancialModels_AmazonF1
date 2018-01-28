@@ -32,7 +32,7 @@ Parameter |  information
 :-------- | :---
 NUM_STEPS    | number of time steps
 NUM_RNGS | number of RNGs running in parallel, proportional to the area cost
-NUM_SIMS   | number of simulations running in parallel for a given RNG (512 optimizes BRAM usage)
+NUM_SIMS   | number of simulations running in parallel for a given RNG (512 ensures a good BRAM usage)
 
 ### Heston kernel models
 
