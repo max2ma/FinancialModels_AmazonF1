@@ -16,6 +16,8 @@ Examples of usage for the European and Asian options:
 
 > blackAsian -s 90 -k 110 -r 0.2 -v 0.1 -t 20
 
+The outputs of both commands are the expected call and put prices.
+
 Argument |  Meaning and default value
 :-------- | :---
 -t       |  time period (1.0)
@@ -39,6 +41,8 @@ Examples of usage for European and European with barrier options:
 > hestonEuro -s 256
 
 > hestonEuroBarrier -s 512
+
+The outputs of both commands are the expected call and put prices.
 
 Argument |  Meaning and default value
 :-------- | :---
