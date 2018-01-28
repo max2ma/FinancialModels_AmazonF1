@@ -26,7 +26,7 @@ Argument |  Meaning and default value
 -s	 |  initial price of the stock (100)
 -k       |  strike price for the option (110)
 
-Note: some of the simulation parameters, namely the number of random number generators, the number of simulations running in parallel for a given RNG and the number of time steps, are set, for the sake of efficiency, as compile-time constants in ***"blackScholes.cpp"***. 
+Note: some of the simulation parameters, namely the number of random number generators, the number of simulations running in parallel for a given RNG and the number of time steps, are set, for the sake of efficiency, as compile-time constants in **blackScholes.cpp**. 
 
 Parameter |  information
 :-------- | :---
@@ -48,7 +48,7 @@ Argument |  Meaning and default value
 :-------- | :---
 -s       | number of simulation runs N (512)
 
-Note: some of the simulation parameters, namely the number of random number generators and the number of time steps, are set, for the sake of efficiency, as compile-time constants in ***"heston.cpp"***. 
+Note: some of the simulation parameters, namely the number of random number generators and the number of time steps, are set, for the sake of efficiency, as compile-time constants in **heston.cpp**. 
 
 Parameter |  information
 :-------- | :---
