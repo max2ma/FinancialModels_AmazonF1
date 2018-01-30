@@ -68,6 +68,7 @@ Examples of usage for European and European with barrier options:
   > hestonEuro -s 256
   > hestonEuroBarrier -s 512
   ```
+
 The outputs of both commands are the expected call and put prices.
 
 Argument |  Meaning and default value
@@ -82,6 +83,7 @@ NUM_STEPS    | number of time steps
 NUM_RNGS | number of RNGs running in parallel, proportional to the area cost
 
 ## Performance on Amazon F1 FPGA
+
 Target frequency is 250MHz. 
 Target device is 'xcvu9p-flgb2104-2-i'
 
@@ -141,8 +143,3 @@ compiles the code and generates the F1-targeted bitstream for the European optio
 [$$P_{Call}=max\{S-K,0\}\\P_{put}=max\{K-S,0\}$$]:/figures/euro.PNG
 [$$P_{Call}=max\{\frac{1}{T}\int_0^TSdt-K,0\}\\P_{put}=max\{K-\frac{1}{T}\int_0^TSdt,0\}$$]:/figures/asian.PNG
 [$$T=\alpha M \cdot N+\beta N+\gamma M+\theta$$]:/figures/tall.PNG
-
-
-
-
-
