@@ -30,7 +30,7 @@ where T is the time period (between now and the option expiration date) , S is t
 The [Heston model][Heston Model], which was first published by Steven Heston in 1993, is a more sophisticated  mathematical model describing the behaviour of investment instruments in financial markets. This model focuses on comparing the Return On Investment for one risky asset, whose price and volatility are subject to [geometric Brownian motion][geometric Brownian motion] and one riskless asset with a fixed interest rate.
 
 Two styles of stock transaction [options][option] are considered in this implementation of the Heston model, namely the European vanilla option and European barrier option (which is one of the [exotic options][exotic options]).
-[Call options][Call options] and [put options][put options] are defined reciprocally. Given the basic parameters for an option, namely expiration date and strike price, the call/put payoff price can be estimated as discussed in [Heston model][this article].
+[Call options][Call options] and [put options][put options] are defined reciprocally. Given the basic parameters for an option, namely expiration date and strike price, the call/put payoff price can be estimated as discussed in [this article][Heston model].
 
 ## Usage
 
@@ -64,7 +64,7 @@ Examples of usage for European and European with barrier options:
 
 The outputs of both commands are the expected call and put prices. The ```-b <binary_file_name>``` option can be used to specify a binary file name different from the default ```<kernel_name>.hw.xilinx_xil-accel-rd-ku115_4ddr-xpr.awsxclbin```
 
-The model parameters are specified in a file (in protobuf form) called ```hestonEuro.parameters``` and ```hestonEuroBarrier.parameters``` respectively. The meaning of the parameters is as follows (see also [Heston Model][this article] for more details).
+The model parameters are specified in a file (in protobuf form) called ```hestonEuro.parameters``` and ```hestonEuroBarrier.parameters``` respectively. The meaning of the parameters is as follows (see also [this article][Heston Model] for more details).
 
 Parameter |  Meaning and default value
 :-------- | :---
