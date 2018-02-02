@@ -1,8 +1,8 @@
 # Monte Carlo financial models on Amazon F1 instances
 ## Introduction
 This repository includes F1-optimized implementations of four Monte Carlo financial models, namely:
-  - the European and the Asian options of the the [Black-Scholes model](https://github.com/KitAway/BlackScholes_MonteCarlo), 
-  - the European and the European barrier options the [Heston model](https://github.com/KitAway/HestonModel_MonteCarlo). 
+  - the European and the Asian options of the the [Black-Scholes model][Black-Scholes Model], 
+  - the European and the European barrier options of the [Heston model][Heston Model]. 
 
 (see the hyperlinks above in case you need more details about the implementation).
 
@@ -29,7 +29,7 @@ For the Asian option, we have:
 where T is the time period (between now and the option expiration date) , S is the stock price at the expiration date, and K is the strike price.
 
 ### Heston Model
-The [Heston model][Heston Model], which was first published by Steven Heston in 1993, is a famous mathematical model describing the behaviour of investment instruments in financial markets. This model focuses on comparing the Return On Investment for one risky asset, whose price and volatility are subject to [geometric Brownian motion][geometric Brownian motion] and one riskless asset with a fixed interest rate.
+The [Heston model][Heston Model], which was first published by Steven Heston in 1993, is a more sophisticated  mathematical model describing the behaviour of investment instruments in financial markets. This model focuses on comparing the Return On Investment for one risky asset, whose price and volatility are subject to [geometric Brownian motion][geometric Brownian motion] and one riskless asset with a fixed interest rate.
 
 Two styles of stock transaction [options][option] are considered in this implementation of the Heston model, namely the European vanilla option and European barrier option (which is one of the [exotic options][exotic options]).
 [Call options][Call options] and [put options][put options] are defined reciprocally. Given the basic parameters for an option, namely expiration date and strike price, the call/put payoff price can be estimated as discussed in [Heston model][this article].
@@ -43,6 +43,7 @@ Examples of usage for the European and Asian options:
   > blackeuro 
   > blackasian 
   ```
+  
 The outputs of both commands are the expected call and put prices. The ```-b <binary_file_name>``` option can be used to specify a binary file name different from the default ```<kernel_name>.hw.xilinx_xil-accel-rd-ku115_4ddr-xpr.awsxclbin```
 
 The model parameters are specified in a file (in protobuf form) called ```blackEuro.parameters``` and ```blackAsian.parameters``` respectively. The meaning of the parameters is as follows.
@@ -65,7 +66,7 @@ Examples of usage for European and European with barrier options:
 
 The outputs of both commands are the expected call and put prices. The ```-b <binary_file_name>``` option can be used to specify a binary file name different from the default ```<kernel_name>.hw.xilinx_xil-accel-rd-ku115_4ddr-xpr.awsxclbin```
 
-The model parameters are specified in a file (in protobuf form) called ```hestonEuro.parameters``` and ```hestonEuroBarrier.parameters``` respectively. The meaning of the parameters is as follows (see also [Heston model][this article] for more details).
+The model parameters are specified in a file (in protobuf form) called ```hestonEuro.parameters``` and ```hestonEuroBarrier.parameters``` respectively. The meaning of the parameters is as follows (see also [Heston Model][this article] for more details).
 
 Parameter |  Meaning and default value
 :-------- | :---
@@ -109,7 +110,7 @@ In all cases, the enclosed Makefile can be used to compile the models. For examp
   ```
 compiles the code and generates the F1-targeted bitstream for the European option of the Black-Scholes model. Environment variable ```COMMON_REPO``` must point to the ```examples/xilinx``` sub-directory of the folder where the AWS development kit github has been checked out.
 
-Note that, for the sake of efficiency, some of the simulation parameters, namely the number of random number generators, the number of simulations running in parallel for a given RNG and the number of time steps, are set as compile-time constants in ```blackScholes.cpp```, ```hestonEuro.h``` and ``hestonEuroBarrier.h``` respectively. They are listed below and can be changed by recompiling the kernel and re-generating the AFI.
+Note that, for the sake of efficient implementation on the FPGA, the simulation parameters which directly affect the amount of parallelism in the implementation are set as compile-time constants in ```blackScholes.cpp```, ```hestonEuro.h``` and ```hestonEuroBarrier.h``` respectively. They are listed below and can be changed by recompiling the kernels and re-generating the AFI.
 
 Parameter |  information
 :-------- | :---
