@@ -44,7 +44,7 @@ $(EXES)_c: $($(KERNEL_NAME)_SRCS) ../main.cpp
 	c++ -o $(EXES)_c -DPURE_C $($(EXES)_CXXFLAGS) $($(KERNEL_NAME)_SRCS) ../main.cpp
 
 pure_c: $(EXES)_c
-    $(EXES)_c
+	$(EXES)_c
 
 include $(COMMON_REPO)/utility/rules.mk
 
