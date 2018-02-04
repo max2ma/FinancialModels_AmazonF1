@@ -46,13 +46,13 @@ The outputs of both commands are the expected call and put prices. The ```-b <bi
 
 The model parameters are specified in a file (in protobuf form) called ```blackEuro.parameters``` and ```blackAsian.parameters``` respectively. The meaning of the parameters is as follows.
 
-Parameter |  Meaning and default value
+Parameter |  Meaning 
 :-------- | :---
-time      |  time period (1.0)
-rate       |  interest rate of riskless asset (0.05)
-volatility|  volatility of the risky asset (0.2)
-initprice	 |  initial price of the stock (100)
-strikeprice       |  strike price for the option (110)
+time      |  time period 
+rate       |  interest rate of riskless asset 
+volatility|  volatility of the risky asset 
+initprice	 |  initial price of the stock 
+strikeprice       |  strike price for the option 
 
 ### Heston models
 
@@ -66,19 +66,19 @@ The outputs of both commands are the expected call and put prices. The ```-b <bi
 
 The model parameters are specified in a file (in protobuf form) called ```hestonEuro.parameters``` and ```hestonEuroBarrier.parameters``` respectively. The meaning of the parameters is as follows (see also [this article][Heston Model] for more details).
 
-Parameter |  Meaning and default value
+Parameter |  Meaning 
 :-------- | :---
-time      |  time period (1.0)
-rate       |  interest rate of riskless asset (0.05)
-volatility|  volatility of the risky asset (0.3)
-initprice	 |  initial price of the stock (100)
-strikeprice       |  strike price for the option (110)
-theta | long run average price volatility (0.019)
-kappa | rate at which the volatility reverts to theta (6.21)
-xi | volatility of the volatility (0.61)
-rho | covariance (-0.7)
-upb | upper bound on price (110)
-lowb | lower bound on price (99)
+time      |  time period 
+rate       |  interest rate of riskless asset 
+volatility|  volatility of the risky asset 
+initprice	 |  initial price of the stock 
+strikeprice       |  strike price for the option 
+theta | long run average price volatility 
+kappa | rate at which the volatility reverts to theta 
+xi | volatility of the volatility 
+rho | covariance 
+upb | upper bound on price 
+lowb | lower bound on price 
 
 ## Performance on Amazon F1 FPGA
 
