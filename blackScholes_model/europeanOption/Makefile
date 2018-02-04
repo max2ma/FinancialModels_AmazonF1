@@ -43,6 +43,9 @@ CHECKS=check
 $(EXES)_c: $($(KERNEL_NAME)_SRCS) ../main.cpp
 	c++ -o $(EXES)_c -DPURE_C $($(EXES)_CXXFLAGS) $($(KERNEL_NAME)_SRCS) ../main.cpp
 
+pure_c: $(EXES)_c
+    $(EXES)_c
+
 include $(COMMON_REPO)/utility/rules.mk
 
 # HOST_ARGS = -b xclbin/blackEuro.sw_emu.xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0.xclbin -c 6.04 -p 10.65
