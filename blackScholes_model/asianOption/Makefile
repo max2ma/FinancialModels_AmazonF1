@@ -11,7 +11,7 @@ EXES=blackasian
 
 # Host Application
 $(EXES)_SRCS=../main.cpp $(oclHelper_SRCS) $(xcl2_SRCS)
-$(EXES)_CXXFLAGS=-I$(COMMON_DIR) -DKERNEL=\"$(KERNEL_NAME)\" $(opencl_CXXFLAGS) $(xcl2_CXXFLAGS) $(oclHelper_CXXFLAGS) -std=c++0x -O3 
+$(EXES)_CXXFLAGS=-I$(COMMON_DIR) -DKERNEL=\"$(KERNEL_NAME)\" -DKERNEL_NAME=$(KERNEL_NAME) $(opencl_CXXFLAGS) $(xcl2_CXXFLAGS) $(oclHelper_CXXFLAGS) -std=c++0x -O3 
 $(EXES)_LDFLAGS=$(opencl_LDFLAGS) 
 $(EXES)_HDRS=$(xcl2_HDRS)
 ifeq ($(PROTOBUF),1)
@@ -37,6 +37,10 @@ check_EXE=$(KERNEL_NAME)
 check_XCLBINS=$(KERNEL_NAME) 
 
 CHECKS=check
+
+# For execution purely in C
+$(EXES)_c: $($(KERNEL_NAME)_SRCS) ../main.cpp
+	c++ -o $(EXES)_c -DPURE_C $($(EXES)_CXXFLAGS) $($(EXES)_LDFLAGS) $($(KERNEL_NAME)_SRCS) ../main.cpp
 
 include $(COMMON_REPO)/utility/rules.mk
 
