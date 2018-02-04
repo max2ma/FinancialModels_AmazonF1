@@ -1,33 +1,44 @@
-COMMON_DIR:=../../common/
+COMMON_DIR:=../../common
 
 #Common Includes
 include $(COMMON_REPO)/utility/boards.mk
 include $(COMMON_REPO)/libs/xcl2/xcl2.mk
 include $(COMMON_REPO)/libs/opencl/opencl.mk
 
-# Host Application
-run_heston_SRCS=main.cpp $(oclHelper_SRCS) $(xcl2_SRCS)
-run_heston_HDRS=$(xcl2_HDRS)
-run_heston_CXXFLAGS=-I$(COMMON_DIR) $(opencl_CXXFLAGS) $(xcl2_CXXFLAGS) $(oclHelper_CXXFLAGS) -std=c++0x
-run_heston_LDFLAGS=$(opencl_LDFLAGS)
+# These must be different
+KERNEL_NAME=hestonEuroBarrier
+EXES=hestoneurobarrier
 
-EXES=run_heston
+# Host Application
+$(EXES)_SRCS=main.cpp $(oclHelper_SRCS) $(xcl2_SRCS)
+$(EXES)_CXXFLAGS=-I$(COMMON_DIR) -DKERNEL=\"$(KERNEL_NAME)\" $(opencl_CXXFLAGS) $(xcl2_CXXFLAGS) $(oclHelper_CXXFLAGS) -std=c++0x -O3 
+$(EXES)_LDFLAGS=$(opencl_LDFLAGS) 
+$(EXES)_HDRS=$(xcl2_HDRS)
+ifeq ($(PROTOBUF),1)
+$(EXES)_SRCS+=$(COMMON_DIR)/bs.pb.cc 
+$(EXES)_CXXFLAGS+=-DUSE_PROTOBUF 
+$(EXES)_LDFLAGS+=-lprotobuf
+endif
+
 
 # Kernel
-hestonEuroBarrier_SRCS=hestonBarrier.cpp $(COMMON_DIR)/stockData.cpp $(COMMON_DIR)/volatilityData.cpp $(COMMON_DIR)/RNG.cpp $(COMMON_DIR)/barrierData.cpp
+DEVICES=~/aws/aws-fpga/SDAccel/aws_platform/xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0/xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0.xpfm
+$(KERNEL_NAME)_SRCS=$(KERNEL_NAME).cpp $(COMMON_DIR)/barrierData.cpp $(COMMON_DIR)/stockData.cpp $(COMMON_DIR)/volatilityData.cpp $(COMMON_DIR)/RNG.cpp
+XOS=$(KERNEL_NAME)
 
-XOS=hestonEuroBarrier
+$(KERNEL_NAME)_XOS=$(KERNEL_NAME)
 
-hestonEuroBarrier_XOS=hestonEuroBarrier
+XCLBINS=$(KERNEL_NAME)
+CLFLAGS=-I$(COMMON_DIR) -I. --kernel $(KERNEL_NAME) 
+#CLFLAGS+=--xp "param:compiler.preserveHlsOutput=1" --xp "param:compiler.generateExtraRunData=true" -s 
 
-XCLBINS=hestonEuroBarrier
-CLFLAGS=-I$(COMMON_DIR) --kernel hestonEuroBarrier --xp "param:compiler.preserveHlsOutput=1" --xp "param:compiler.generateExtraRunData=true" -s 
 # check
-check_EXE=run_heston
-check_XCLBINS=hestonEuroBarrier
+check_EXE=$(KERNEL_NAME)
+check_XCLBINS=$(KERNEL_NAME) 
 
 CHECKS=check
 
 include $(COMMON_REPO)/utility/rules.mk
 
-# -a heston.xclbin -p 0.887 -c 0.776 -n hestonBarrier
+# HOST_ARGS = -b xclbin/hestonEuroBarrier.sw_emu.xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0.xclbin -c 6.04 -p 10.65 
+

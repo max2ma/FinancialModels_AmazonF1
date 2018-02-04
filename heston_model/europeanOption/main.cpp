@@ -59,19 +59,18 @@ namespace Params
 	double kappa = 6.21;
 	double xi = 0.61;
 	double rho = -0.7;
-	double S0 = 100;
-	double K = 100;
+	double initprice = 100;
+	double strikeprice = 100;
 	double rate = 0.0319;
 	double volatility = 0.10201;
-	double T = 1.0;
-	char *kernel_name="hestonEuro";     // -n
-	char *binary_name="*.xclbin";     // -a
+	double time = 1.0;
+	const char *kernel_name=KERNEL;     // -n
+	const char *binary_name=KERNEL ".hw.xilinx_xil-accel-rd-ku115_4ddr-xpr.awsxclbin";     // -a
 }
 void usage(char* name)
 {
     cout<<"Usage: "<<name
-        <<" -a opencl_binary_name"
-        <<" -n kernel_name"
+        <<" [-b binary_file_name]"
         <<" [-c call_price]"
         <<" [-p put_price]"
         <<endl;
@@ -80,16 +79,11 @@ int main(int argc, char** argv)
 {
 	int opt;
 	double callR=-1, putR=-1;
-	bool flaga=false,flagc=false,flagp=false,flagn=false;
-	while((opt=getopt(argc,argv,"n:a:c:p:"))!=-1){
+	bool flagc=false,flagp=false;
+	while((opt=getopt(argc,argv,"b:c:p:"))!=-1){
 		switch(opt){
-			case 'n':
-				Params::kernel_name=optarg;
-				flagn=true;
-				break;
-			case 'a':
+			case 'b':
 				Params::binary_name=optarg;
-				flaga=true;
 				break;
 			case 'c':
 				callR=atof(optarg);
@@ -104,12 +98,44 @@ int main(int argc, char** argv)
 				return -1;
 		}
 	}
-	// Check the mandatory argument.
-	if(!flaga) {
-		usage(argv[0]);
-		return -1;
-	}
+        fstream is(KERNEL ".parameters", ios::in);
+        if(!is){
+                cerr << "Cannot open parameter file: " KERNEL ".parameters" <<endl;
+                return -1;
+        }
+        string line;
+        while (getline (is, line)) {
+            if (line.substr(0, strlen("initprice:")) == "initprice:") {
+                Params::initprice = stod(line.substr(strlen("initprice:")+1));
+            } else if (line.substr(0, strlen("strikeprice:")) == "strikeprice:") {
+                Params::strikeprice = stod(line.substr(strlen("strikeprice:")+1));
+            } else if (line.substr(0, strlen("rate:")) == "rate:") {
+                Params::rate = stod(line.substr(strlen("rate:")+1));
+            } else if (line.substr(0, strlen("volatility:")) == "volatility:") {
+                Params::volatility = stod(line.substr(strlen("volatility:")+1));
+            } else if (line.substr(0, strlen("time:")) == "time:") {
+                Params::time = stod(line.substr(strlen("time:")+1));
+            } else if (line.substr(0, strlen("theta:")) == "theta:") {
+                Params::theta = stod(line.substr(strlen("theta:")+1));
+            } else if (line.substr(0, strlen("kappa:")) == "kappa:") {
+                Params::kappa = stod(line.substr(strlen("kappa:")+1));
+            } else if (line.substr(0, strlen("xi:")) == "xi:") {
+                Params::xi = stod(line.substr(strlen("xi:")+1));
+            } else if (line.substr(0, strlen("rho:")) == "rho:") {
+                Params::rho = stod(line.substr(strlen("rho:")+1));
+            } else if (line.substr(0, strlen("kernel_name:")) == "kernel_name:") {
+                //Params::kernel_name = line.substr(strlen("kernel_name:")+1).c_str();
+            } else {
+                cerr << "Unknown parameter: " << line << endl;
+            }
+        }
+
 	ifstream ifstr(Params::binary_name);
+        if(!ifstr){
+                cerr << "Cannot open binary file: " << Params::binary_name<<endl;
+                return -1;
+        }
+
 	const string programString(istreambuf_iterator<char>(ifstr),
 		(istreambuf_iterator<char>()));
 	vector<float, aligned_allocator<float> > h_call(1),h_put(1);
@@ -153,6 +179,17 @@ int main(int argc, char** argv)
 	  outBufVec.push_back(d_call);
 		outBufVec.push_back(d_put);
 
+       cout << "Starting execution. Time=" << Params::time
+            << " rate=" << Params::rate
+            << " volatility =" << Params::volatility
+            << " initprice=" << Params::initprice
+            << " strikeprice=" << Params::strikeprice
+            << " theta=" << Params::theta
+            << " kappa=" << Params::kappa
+            << " xi=" << Params::xi
+            << " rho=" << Params::rho
+	    << endl;
+
 		clock_t start = clock();
 		cl::EnqueueArgs enqueueArgs(commandQueue,cl::NDRange(1),cl::NDRange(1));
 		cl::Event event = kernelFunctor(enqueueArgs,
@@ -161,18 +198,19 @@ int main(int argc, char** argv)
 						Params::kappa,
 						Params::xi,
 						Params::rho,
-						Params::T,
+						Params::time,
 						Params::rate,
 						Params::volatility,
-						Params::S0,
-						Params::K
+						Params::initprice,
+						Params::strikeprice
 						);
 		commandQueue.enqueueMigrateMemObjects(outBufVec,CL_MIGRATE_MEM_OBJECT_HOST);
 		commandQueue.finish();
 		event.wait();
 
 		clock_t t = clock() - start;
-		cout << "The execution lasts for "<< (float)t /CLOCKS_PER_SEC <<" s (CPU time)."<<endl;
+		cout << "Execution completed"<<endl;
+		cout << "Execution time "<< (float)t /CLOCKS_PER_SEC <<" s"<<endl;
 		cout<<"the call price is: "<<h_call[0]<<'\t';
 		if(flagc)
 			cout<<"the difference with the reference value is "<<fabs(h_call[0]/callR-1)*100<<'%'<<endl;

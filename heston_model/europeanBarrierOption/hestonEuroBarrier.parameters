@@ -1,5 +1,5 @@
-initPrice: 100
-strikePrice: 110
+initprice: 100
+strikeprice: 110
 rate: 0.05
 volatility: 0.3
 time: 1
@@ -7,3 +7,5 @@ theta: 0.019
 kappa: 6.21
 xi: 0.61
 rho: -0.7
+upb: 110
+lowb: 99

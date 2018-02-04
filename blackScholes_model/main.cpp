@@ -52,24 +52,26 @@
 #include <ctime>
 #include "xcl2.hpp"
 
+#ifdef USE_PROTOBUF
 #include "bs.pb.h"
 #include <google/protobuf/text_format.h>
+#endif
 using namespace std;
 
 namespace Params 
 {
-	double S0 = 100;		    // -s
-	double K = 110;			    // -k
+	double initprice = 100;		    // -s
+	double strikeprice = 110;			    // -k
 	double rate = 0.05;   		// -r
 	double volatility = 0.2;	// -v
-	double T = 1.0;			    // -t
-	char *kernel_name="blackEuro";     // -n
-	char *binary_name="*.xclbin";     // -a
+	double time = 1.0;			    // -t
+	const char *kernel_name=KERNEL;     // -n
+	const char *binary_name=KERNEL ".hw.xilinx_xil-accel-rd-ku115_4ddr-xpr.awsxclbin";     // -a
 }
 void usage(char* name)
 {
-    cout<<"Usage: "<<name
-        <<" -b opencl_binary_name"
+    cerr<<"Usage: "<<name
+        <<" [-b binary_file_name]"
         <<" [-c call_price]"
         <<" [-p put_price]"
         <<endl;
@@ -78,12 +80,11 @@ int main(int argc, char** argv)
 {
 	int opt;
 	double callR=-1, putR=-1;
-	bool flagc=false,flagp=false,flagb=false;
+	bool flagc=false,flagp=false;
 	while((opt=getopt(argc,argv,"b:c:p:"))!=-1){
 		switch(opt){
 			case 'b':
 				Params::binary_name=optarg;
-				flagb=true;
 				break;
 			case 'c':
 				callR=atof(optarg);
@@ -99,22 +100,49 @@ int main(int argc, char** argv)
 		}
 	}
 
-	if(!flagb){
-		usage(argv[0]);
-		return -1;
-	}
-
-	parameters::blackScholes euroBS;
-	fstream is("european.parameters", ios::in);
+#ifdef USE_PROTOBUF
+	parameters::blackScholes params;
+#endif
+	fstream is(KERNEL ".parameters", ios::in);
 	if(!is){
-		cout << "Parameter file open failed." <<endl;
+		cerr << "Cannot open parameter file: " KERNEL ".parameters" <<endl;
 		return -1;
 	}
+#ifdef USE_PROTOBUF
 	const string str(istreambuf_iterator<char>(is),
 		(istreambuf_iterator<char>()));
-	google::protobuf::TextFormat::ParseFromString(str, &euroBS);
+	google::protobuf::TextFormat::ParseFromString(str, &params);
 
+	Params::time = params.time();
+	Params::rate == params.rate();
+	Params::volatility = params.volatility();
+	Params::initprice = params.initprice();
+	Params::strikeprice == params.strikeprice();
+#else
+	string line;
+	while (getline (is, line)) {
+	    if (line.substr(0, strlen("initprice:")) == "initprice:") {
+		Params::initprice = stod(line.substr(strlen("initprice:")+1));
+	    } else if (line.substr(0, strlen("strikeprice:")) == "strikeprice:") {
+		Params::strikeprice = stod(line.substr(strlen("strikeprice:")+1));
+	    } else if (line.substr(0, strlen("rate:")) == "rate:") {
+		Params::rate = stod(line.substr(strlen("rate:")+1));
+	    } else if (line.substr(0, strlen("volatility:")) == "volatility:") {
+		Params::volatility = stod(line.substr(strlen("volatility:")+1));
+	    } else if (line.substr(0, strlen("time:")) == "time:") {
+		Params::time = stod(line.substr(strlen("time:")+1));
+	    } else if (line.substr(0, strlen("kernel_name:")) == "kernel_name:") {
+		//Params::kernel_name = line.substr(strlen("kernel_name:")+1).c_str();
+	    } else {
+		cerr << "Unknown parameter: " << line << endl;
+	    }
+	}
+#endif
 	ifstream ifstr(Params::binary_name); 
+	if(!ifstr){
+		cerr << "Cannot open binary file: " << Params::binary_name<<endl;
+		return -1;
+	}
 	const string programString(istreambuf_iterator<char>(ifstr),
 		(istreambuf_iterator<char>()));
 	vector<float,aligned_allocator<float>> h_call(1),h_put(1);
@@ -139,7 +167,7 @@ int main(int argc, char** argv)
 			{
 				string info;
 				program.getBuildInfo(devices[0],CL_PROGRAM_BUILD_LOG, &info);
-				cout << info << endl;
+				cerr << info << endl;
 				return EXIT_FAILURE;
 			}
 			else throw err;
@@ -150,7 +178,12 @@ int main(int argc, char** argv)
     cl::Kernel kernel(program,Params::kernel_name);
     auto kernelFunctor = cl::KernelFunctor<cl::Buffer,cl::Buffer,float,float,float,float,float>(kernel);
 
-		cout << "Functor created."<<endl;
+    cout << "Starting execution. Time=" << Params::time
+	<< " rate=" << Params::rate 
+	<< " volatility =" << Params::volatility
+	<< " initprice=" << Params::initprice 
+	<< " strikeprice=" << Params::strikeprice 
+	<< endl;
     cl::Buffer d_call(context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, 
             sizeof(float), h_call.data());
     cl::Buffer d_put(context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, 
@@ -165,11 +198,11 @@ int main(int argc, char** argv)
 		cl::EnqueueArgs enqueueArgs(commandQueue,cl::NDRange(1),cl::NDRange(1));
 		cl::Event event = kernelFunctor(enqueueArgs,
 						d_call,d_put,
-						euroBS.time(),
-						euroBS.rate(),
-						euroBS.volatility(),
-						euroBS.initprice(),
-						euroBS.strikeprice()
+						Params::time,
+						Params::rate,
+						Params::volatility,
+						Params::initprice,
+						Params::strikeprice
 						);
 
     commandQueue.enqueueMigrateMemObjects(outBufVec,CL_MIGRATE_MEM_OBJECT_HOST);
@@ -180,11 +213,11 @@ int main(int argc, char** argv)
 		cl_ulong time_start, time_stop;
 		event.getProfilingInfo(CL_PROFILING_COMMAND_START, &time_start);
 		event.getProfilingInfo(CL_PROFILING_COMMAND_END, &time_stop);
-		double Seconds = double(time_stop  - time_start)/1e9;
-		cout << "Execution successfully."<<endl;
-		cout << "The execution lasts for "<< (float)t /CLOCKS_PER_SEC <<" s (CPU time)."<<endl;
-		cout << "The execution lasts for "<< Seconds <<" s (event time)."<<endl;
-
+		double Seconds = (double)(time_stop  - time_start)/1e9;
+		cout << "Execution completed"<<endl;
+		cout << "Execution time "<< (float)t /CLOCKS_PER_SEC <<" s"<<endl;
+		//cout << "Execution time "<< Seconds <<" s"<<endl;
+		
 		//cl::copy(commandQueue, d_call, h_call.begin(), h_call.end());
 		//cl::copy(commandQueue, d_put, h_put.begin(), h_put.end());
 		cout<<"the call price is: "<<h_call[0]<<'\t';

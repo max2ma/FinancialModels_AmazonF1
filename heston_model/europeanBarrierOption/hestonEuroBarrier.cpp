@@ -24,7 +24,7 @@
 *
 *----------------------------------------------------------------------------
 */
-#include "hestonBarrier.h"
+#include "hestonEuroBarrier.h"
 
 extern "C"
 void hestonEuroBarrier(data_t *pCall, data_t *pPut,   // call price and put price
