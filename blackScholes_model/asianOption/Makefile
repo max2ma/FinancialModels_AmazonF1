@@ -48,5 +48,6 @@ pure_c: $(EXES)_c
 
 include $(COMMON_REPO)/utility/rules.mk
 
-# HOST_ARGS = -b xclbin/blackAsian.sw_emu.xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0.xclbin -c 3.42 -p 3.24
+# HOST_ARGS = -b xclbin/blackAsian.sw_emu.xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0.xclbin -c 24.98 -p 0.28	
+#
 
