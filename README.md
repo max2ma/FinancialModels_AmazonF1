@@ -85,12 +85,12 @@ lowb | lower bound on price
 Target frequency is 250MHz. 
 Target device is 'xcvu9p-flgb2104-2-i'
 
-| Models | Options | No.random number generators | No.paths | No.partitions | Execution time on F1 CPU [s] | Execution time on FPGA [s] | LUT | LUTMem | REG | BRAM | DSP | 
+| Models | Options | No.random number generators | No.paths | No.partitions | Execution time on C5 CPU [s] | Execution time on F1 CPU [s] | Execution time on F1 FPGA [s] | LUT | LUTMem | REG | BRAM | DSP | 
 |-|-|-|-|-|-|-|-|-|-|-| -|
-| Black-Scholes | European option |64|2^{31}|1|139|0.2|25% |2.7%|13% |19% | 43%|
-| Black-Scholes | Asian option |64|2^{25}| 256|16|0.74|25%|2.2%|13%|19%|43%|
-| Heston | European option |32|2^{24}|256|28|1.52|15% |2.2%|8.2%|8.2%| 26%|
-| Heston | European barrier option |32|2^{23}|256|27|0.75|14%|2.3%|7.8%|8.0%|26%|
+| Black-Scholes | European option |64|2^{31}|1| |139|0.2|25% |2.7%|13% |19% | 43%|
+| Black-Scholes | Asian option |64|2^{25}| 256 | |16|0.74|25%|2.2%|13%|19%|43%|
+| Heston | European option |32|2^{24}|256| | 28|1.52|15% |2.2%|8.2%|8.2%| 26%|
+| Heston | European barrier option |32|2^{23}|256| |27|0.75|14%|2.3%|7.8%|8.0%|26%|
 
 ## Further information and recompilation
 
