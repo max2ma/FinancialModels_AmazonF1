@@ -108,6 +108,8 @@ In all cases, the enclosed Makefile can be used to compile the models. For examp
   ```
 compiles the code and generates the F1-targeted bitstream for the European option of the Black-Scholes model. Environment variable ```COMMON_REPO``` must point to the ```examples/xilinx``` sub-directory of the folder where the AWS development kit github has been checked out.
 
+For purely SW execution, a target ```pure_c``` has been added to the Makefiles. It compiles the main and the kernel using purely C++ and runs it on the local CPU.
+
 Note that, for the sake of efficient implementation on the FPGA, the simulation parameters which directly affect the amount of parallelism in the implementation are set as compile-time constants in ```blackScholes.cpp```, ```hestonEuro.h``` and ```hestonEuroBarrier.h``` respectively. They are listed below and can be changed by recompiling the kernels and re-generating the AFI.
 
 Parameter |  information
