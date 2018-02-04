@@ -1,8 +1,8 @@
 initprice: 100
-strikeprice: 110
-rate: 0.05
-volatility: 0.3
-time: 1
+strikeprice: 100
+rate: 0.0319
+volatility: 0.10201
+time: 1.0
 theta: 0.019
 kappa: 6.21
 xi: 0.61

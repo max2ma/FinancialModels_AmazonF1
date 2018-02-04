@@ -41,4 +41,15 @@ public:
 	void sampleSIM(RNG *,data_t*,data_t*);
 };
 
+extern "C"
+void hestonEuro(data_t *pCall, data_t *pPut,
+		data_t expect,
+		data_t kappa,
+		data_t variance,
+		data_t correlation,
+		data_t timeT,
+		data_t freeRate,
+		data_t volatility,
+		data_t initPrice,
+		data_t strikePrice);
 #endif

@@ -72,15 +72,11 @@ namespace Params
 	double volatility = 0.2;	// -v
 	double time = 1.0;			    // -t
 	const char *kernel_name=KERNEL;     // -n
-	const char *binary_name=KERNEL ".hw.xilinx_xil-accel-rd-ku115_4ddr-xpr.awsxclbin";     // -a
+	const char *binary_name=KERNEL ".hw." PLATFORM ".awsxclbin";     // -a
 }
 void usage(char* name)
 {
-    cerr<<"Usage: "<<name
-        <<" [-b binary_file_name]"
-        <<" [-c call_price]"
-        <<" [-p put_price]"
-        <<endl;
+    cerr<<"Usage: "<<name <<" [-b binary_file_name]" <<" [-c call_price]" <<" [-p put_price]" <<endl;
 }
 int main(int argc, char** argv)
 {
