@@ -87,7 +87,7 @@ Target device is 'xcvu9p-flgb2104-2-i'
 
 | Model | Option | N. random number generators | N. simulations | N. simulation groups | N. steps   | Time C5 CPU [s] | Time F1 CPU [s] | Time F1 FPGA [s] | LUT | LUTMem | REG | BRAM | DSP | 
 |-|-|-|-|-|-|-|-|-|-|-|-|-|-|
-| Black-Scholes | European option  |64|512| 1024|  1 | |139|0.2 |25% |2%|13% |19% |43%|
+| Black-Scholes | European option  |64|512| 1024|  1 | |114|0.23|31% |2%|15% |26% |43%|
 | Black-Scholes | Asian option     |64|512|65536|256 | |497|0.83|31% |2%|16% |26% |43%|
 | Heston | European option         |32|512|  512|256 | |330|1.52|18% |2%| 9% |11% |26%|
 | Heston | European barrier option |32|512|  512|256 | | 40|0.75|18% |2%| 9% |11% |26%|
