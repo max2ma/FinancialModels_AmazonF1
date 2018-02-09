@@ -92,7 +92,7 @@ Target device is 'xcvu9p-flgb2104-2-i'
 | Heston | European option         |32|512|  512|256 | 226 |330|1.52|18% |2%| 9% |11% |26%|
 | Heston | European barrier option |32|512|  512|256 | 32 | 40|0.75|18% |2%| 9% |11% |26%|
 
-The results on the CPUs use a single thread. For n threads, the speedup would be exactly n, since Monte Carlo simulations are completely independent.
+The results on the CPUs use a single thread. For n threads with independent resources, the speedup would be exactly n, since Monte Carlo simulations are completely independent.
 
 ## Further information and recompilation
 
