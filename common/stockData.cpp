@@ -22,31 +22,35 @@
 
 #include "stockData.h"
 
-stockData::stockData(data_t timeT, data_t freeRate, data_t volatility,
-		data_t initPrice,data_t strikePrice)
+template<typename DATA_T>
+inline stockData<DATA_T>::stockData(DATA_T timeT, DATA_T freeRate, DATA_T volatility,
+		DATA_T price,DATA_T strikePrice)
 {
 	this->freeRate=freeRate;
-	this->initPrice=initPrice;
+	this->price=price;
 	this->timeT=timeT;
 	this->volatility=volatility;
 	this->strikePrice=strikePrice;
 }
 
-stockData::stockData(const stockData& data)
+template<typename DATA_T>
+inline stockData<DATA_T>::stockData(const stockData<DATA_T>& data)
 {
 	this->freeRate=data.freeRate;
-	this->initPrice=data.initPrice;
+	this->price=data.price;
 	this->timeT=data.timeT;
 	this->volatility=data.volatility;
 	this->strikePrice=data.strikePrice;
 }
-
-void stockData::print()const
+#if 0
+template<typename DATA_T>
+void stockData<DATA_T>::print()const
 {
 	std::cout<<"timeT:"<<timeT<<' '
 			<<"freeRate:"<<freeRate<<' '
 			<<"volatility:"<<volatility<<' '
-			<<"initPrice:"<<initPrice<<' '
+			<<"price:"<<price<<' '
 			<<"strikePrice:"<<strikePrice
 			<<std::endl;
 }
+#endif

@@ -1,59 +1,55 @@
-/* 
+/*======================================================
+	Copyright 2016 Liang Ma
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 ======================================================
- Copyright 2016 Liang Ma
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-======================================================
-*
-* Author:   Liang Ma (liang-ma@polito.it)
-*
-* In the definition of Box_Muller(), sin/cos are used instead of sinf/cosf
-* due to bugs in the synthesizer (C/RTL co-simulation is failing).
-*
-* macro__SINF_COSF_BUG_FIXED__ controls the switch between the two version.
-*
-*----------------------------------------------------------------------------
-*/
+ *
+ * Author:   Liang Ma (liang-ma@polito.it)
+ *
+ * In the definition of Box_Muller(), sin/cos are used instead of sinf/cosf
+ * due to bugs in the synthesizer (C/RTL co-simulation is failing).
+ *
+ *
+ *----------------------------------------------------------------------------
+ */
 
 #include "RNG.h"
-#define RNG_M 397
-
-#define RNG_R 31
-
-#define RNG_U 11
-#define RNG_A 0x9908B0DF
-#define RNG_D 0xFFFFFFFF
-#define RNG_S 7
-#define RNG_B 0x9D2C5680
-#define RNG_T 15
-#define RNG_C 0xEFC60000
-#define RNG_L 18
-#define __SINF_COSF_BUG_FIXED__
-
-#define lower_mask   0x7FFFFFFF//(1 << R) - 1
-#define upper_mask   0x80000000//~lower_mask
-
-#define PI (data_t) 3.14159265358979323846
-
-#define MINI_RND (data_t)2.328306e-10
-
-void RNG::init(uint seed)
-{
+template<typename DATA_T>
+RNG<DATA_T>::RNG(){
+}
+template<typename DATA_T>
+RNG<DATA_T>::RNG(uint seed){
 	this->index = 0;
 	this->seed=seed;
 	uint tmp=seed;
 
-	loop_seed_init:for (int i = 0; i < RNG_H; i++)
+	for (int i = 0; i < RNG_H; i++)
+	{
+#pragma HLS PIPELINE off
+		mt_e[i]=tmp;
+		tmp= RNG_F*(tmp^ (tmp >> (RNG_W - 2))) + (i>>1) +1;
+		mt_o[i]=tmp;
+		tmp= RNG_F*(tmp^ (tmp >> (RNG_W - 2))) + (i>>1) +2;
+	}
+}
+template<typename DATA_T>
+void RNG<DATA_T>::init(uint seed){
+#pragma HLS INLINE
+	this->index = 0;
+	this->seed=seed;
+	uint tmp=seed;
+
+	for (int i = 0; i < RNG_H; i++)
 	{
 		mt_e[i]=tmp;
 		tmp= RNG_F*(tmp^ (tmp >> (RNG_W - 2))) + i*2+1;
@@ -61,13 +57,13 @@ void RNG::init(uint seed)
 		tmp= RNG_F*(tmp^ (tmp >> (RNG_W - 2))) + i*2+2;
 	}
 }
-
-void RNG::init_array(RNG* rng, uint* seed, const int size)
+	template<typename DATA_T>
+void RNG<DATA_T>::init_array(RNG* rng, uint* seed, const int size)
 {
 	uint tmp[size];
 #pragma HLS ARRAY_PARTITION variable=tmp complete dim=1
 
-	loop_set_seed:for(int i=0;i<size;i++)
+	for(int i=0;i<size;i++)
 	{
 #pragma HLS UNROLL
 		rng[i].index = 0;
@@ -76,9 +72,9 @@ void RNG::init_array(RNG* rng, uint* seed, const int size)
 	}
 
 
-	loop_seed_init:for (int i = 0; i < RNG_H; i++)
+	for (int i = 0; i < RNG_H; i++)
 	{
-		loop_group_init:for(int k=0;k<size;k++)
+		for(int k=0;k<size;k++)
 		{
 #pragma HLS UNROLL
 			rng[k].mt_e[i]=tmp[k];
@@ -90,13 +86,14 @@ void RNG::init_array(RNG* rng, uint* seed, const int size)
 }
 
 
-void RNG::extract_number(uint *num1, uint *num2)
+	template<typename DATA_T>
+void RNG<DATA_T>::extract_number(uint *num1, uint *num2)
 {
 #pragma HLS INLINE
 	int id1=increase(1), idm=increase(RNG_MH), idm1=increase(RNG_MHI);
 
- 	uint x = this->seed,x1=this->mt_o[this->index],x2=this->mt_e[id1],
- 			xm=this->mt_o[idm],xm1=this->mt_e[idm1];
+	uint x = this->seed,x1=this->mt_o[this->index],x2=this->mt_e[id1],
+			 xm=this->mt_o[idm],xm1=this->mt_e[idm1];
 
 	x = (x & upper_mask)+(x1 & lower_mask);
 	uint xp = x >> 1;
@@ -131,47 +128,43 @@ void RNG::extract_number(uint *num1, uint *num2)
 }
 
 
-int RNG::increase(int k)
+	template<typename DATA_T>
+int RNG<DATA_T>::increase(int k)
 {
 	int tmp= this->index+k;
 	return (tmp>=RNG_H)? tmp-RNG_H:tmp;
 }
 
-
-void RNG::BOX_MULLER(data_t *data1, data_t *data2,data_t deviation)
+	template<typename DATA_T>
+void RNG<DATA_T>::BOX_MULLER(DATA_T *data1, DATA_T *data2,DATA_T ave, DATA_T deviation)
 {
 #pragma HLS INLINE
-	data_t tp,tmp1,tmp2;
+	static const DATA_T PI= 3.14159265358979323846;
+	static const DATA_T MINI_RNG = 2.328306e-10;
+	DATA_T tp,tmp1,tmp2;
 	uint num1,num2;
 
 	extract_number(&num1,&num2);
-	tmp1=num1*MINI_RND;
-	tmp2=num2*MINI_RND;
+	tmp1=num1*(DATA_T)MINI_RNG;
+	tmp2=num2*(DATA_T)MINI_RNG;
 	tp=sqrtf(fmaxf(-2*logf(tmp1),0)*deviation);
-#ifndef __SINF_COSF_BUG_FIXED__
-	*data1=(data_t)cos(2*PI*(tmp2))*tp;
-	*data2=(data_t)sin(2*PI*(tmp2))*tp;
+#ifdef __DOUBLE_PRECISION__
+	*data1=(DATA_T)cos(2*(DATA_T)PI*(tmp2))*tp+ave;
+	*data2=(DATA_T)sin(2*(DATA_T)PI*(tmp2))*tp+ave;
 #else
-	*data1=cosf(2*PI*(tmp2))*tp;
-	*data2=sinf(2*PI*(tmp2))*tp;
+	*data1=cosf(2*(DATA_T)PI*(tmp2))*tp+ave;
+	*data2=sinf(2*(DATA_T)PI*(tmp2))*tp+ave;
 #endif
 }
-
-void RNG::BOX_MULLER(data_t *data1, data_t *data2,data_t ave, data_t deviation)
-{
-#pragma HLS INLINE
-	data_t tp,tmp1,tmp2;
-	uint num1,num2;
-
-	extract_number(&num1,&num2);
-	tmp1=num1*MINI_RND;
-	tmp2=num2*MINI_RND;
-	tp=sqrtf(fmaxf(-2*logf(tmp1),0)*deviation);
-#ifndef __SINF_COSF_BUG_FIXED__
-	*data1=(data_t)cos(2*PI*(tmp2))*tp+ave;
-	*data2=(data_t)sin(2*PI*(tmp2))*tp+ave;
-#else
-	*data1=cosf(2*PI*(tmp2))*tp+ave;
-	*data2=sinf(2*PI*(tmp2))*tp+ave;
-#endif
+template<typename DATA_T>
+void RNG<DATA_T>::generateStream(int NUM, hls::stream<DATA_T>&sRNG, DATA_T mean, DATA_T std){
+	for(int i = 0 ; i < NUM/2;i++){
+#pragma HLS PIPELINE
+		DATA_T r0, r1;
+		this->BOX_MULLER(&r0, &r1, mean, std);
+		sRNG.write(r0);
+		sRNG.write(r1);
+	}
 }
+template class RNG<float>;
+template class RNG<double>;
