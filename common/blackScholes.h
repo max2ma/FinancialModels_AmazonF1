@@ -29,30 +29,32 @@
 #ifndef __BLACKSCHOLES__
 #define __BLACKSCHOLES__
 #include "hls_stream.h"
-#include <iostream>
 #include "stockData.h"
 using namespace std;
 
-template<int NUM_STEPS, int NUM_SIMS, typename DATA_T>
+template<int NUM_SIMS, typename DATA_T>
 class blackScholes
 {
 	const stockData<DATA_T> data;
+	const int NUM_STEPS;
 	const DATA_T Dt, Vol, SqrtV, Interest;
 	public:
-	blackScholes(stockData<DATA_T>&data):data(data),
+	blackScholes(stockData<DATA_T>&data, int num_steps):data(data),
+	NUM_STEPS(num_steps),
 	Dt(data.timeT / (DATA_T)NUM_STEPS),
 	Vol(expf((data.freeRate- 0.5f * data.volatility * data.volatility)*Dt)),
 	SqrtV(data.volatility * sqrtf(Dt)),
-	Interest(expf(-data.freeRate * data.timeT)){}
+	Interest(expf(-data.freeRate * data.timeT)){
+	}
 	void simulation(hls::stream<DATA_T>& s_RNG, int sims,  DATA_T &pCall, DATA_T &pPut)
 	{
 		DATA_T sumCall=0.0f,sumPut=0.0f;
 
 		for(int k=0;k<sims/NUM_SIMS;k++) {
 			DATA_T stockPrice[NUM_SIMS];
-//#pragma HLS ARRAY_PARTITION variable=stockPrice complete dim=1
+
 			for(int j=0;j<NUM_SIMS;j++)
-#pragma HLS UNROLL
+#pragma HLS PIPELINE
 				stockPrice[j] = data.price;
 
 			for(int s=0; s <NUM_STEPS;s++){
@@ -61,7 +63,6 @@ class blackScholes
 					DATA_T r = s_RNG.read();
 					update(stockPrice[j], r);
 				}
-//				cout <<"price[0] is "<<stockPrice[0]<<endl;
 			}
 
 			for(int j=0;j<NUM_SIMS;j++) {
@@ -75,8 +76,7 @@ class blackScholes
 	}
 	void update(DATA_T& price, const DATA_T &r){
 #pragma HLS INLINE
-		static const DATA_T factor = Vol;
-		price *= factor *  expf(r *SqrtV);
+		price *= Vol * expf(r *SqrtV);
 	}
 	DATA_T executeCall(DATA_T& price){
 #pragma HLS INLINE

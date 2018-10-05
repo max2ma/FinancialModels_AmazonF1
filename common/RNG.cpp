@@ -27,6 +27,7 @@ limitations under the License.
 template<typename DATA_T>
 RNG<DATA_T>::RNG(){
 }
+
 template<typename DATA_T>
 RNG<DATA_T>::RNG(uint seed){
 	this->index = 0;
@@ -57,8 +58,8 @@ void RNG<DATA_T>::init(uint seed){
 		tmp= RNG_F*(tmp^ (tmp >> (RNG_W - 2))) + i*2+2;
 	}
 }
-	template<typename DATA_T>
-void RNG<DATA_T>::init_array(RNG* rng, uint* seed, const int size)
+template<typename DATA_T>
+void RNG<DATA_T>::init_array(RNG* rng, uint* seed, const uint size)
 {
 	uint tmp[size];
 #pragma HLS ARRAY_PARTITION variable=tmp complete dim=1
@@ -86,11 +87,11 @@ void RNG<DATA_T>::init_array(RNG* rng, uint* seed, const int size)
 }
 
 
-	template<typename DATA_T>
+template<typename DATA_T>
 void RNG<DATA_T>::extract_number(uint *num1, uint *num2)
 {
 #pragma HLS INLINE
-	int id1=increase(1), idm=increase(RNG_MH), idm1=increase(RNG_MHI);
+	uint id1=increase(1), idm=increase(RNG_MH), idm1=increase(RNG_MHI);
 
 	uint x = this->seed,x1=this->mt_o[this->index],x2=this->mt_e[id1],
 			 xm=this->mt_o[idm],xm1=this->mt_e[idm1];
@@ -128,36 +129,38 @@ void RNG<DATA_T>::extract_number(uint *num1, uint *num2)
 }
 
 
-	template<typename DATA_T>
-int RNG<DATA_T>::increase(int k)
+template<typename DATA_T>
+unsigned int RNG<DATA_T>::increase(uint k)
 {
-	int tmp= this->index+k;
+	uint tmp= this->index+k;
 	return (tmp>=RNG_H)? tmp-RNG_H:tmp;
 }
 
-	template<typename DATA_T>
+template<typename DATA_T>
 void RNG<DATA_T>::BOX_MULLER(DATA_T *data1, DATA_T *data2,DATA_T ave, DATA_T deviation)
 {
 #pragma HLS INLINE
-	static const DATA_T PI= 3.14159265358979323846;
+	static const DATA_T _2PI= 2*3.14159265358979323846f;
 	static const DATA_T MINI_RNG = 2.328306e-10;
 	DATA_T tp,tmp1,tmp2;
 	uint num1,num2;
 
 	extract_number(&num1,&num2);
-	tmp1=num1*(DATA_T)MINI_RNG;
-	tmp2=num2*(DATA_T)MINI_RNG;
-	tp=sqrtf(fmaxf(-2*logf(tmp1),0)*deviation);
+	tmp1=num1*MINI_RNG;
+	tmp2=num2*MINI_RNG;
 #ifdef __DOUBLE_PRECISION__
-	*data1=(DATA_T)cos(2*(DATA_T)PI*(tmp2))*tp+ave;
-	*data2=(DATA_T)sin(2*(DATA_T)PI*(tmp2))*tp+ave;
+	tp=sqrt(fmax(-2*log(tmp1),0)*deviation);
+	*data1=cos(_2PI*tmp2)*tp+ave;
+	*data2=sin(_2PI*tmp2)*tp+ave;
 #else
-	*data1=cosf(2*(DATA_T)PI*(tmp2))*tp+ave;
-	*data2=sinf(2*(DATA_T)PI*(tmp2))*tp+ave;
+	tp=sqrtf(fmaxf(-2.0f*logf(tmp1),0.0f)*deviation);
+	*data1=cosf(_2PI*tmp2)*tp+ave;
+	*data2=sinf(_2PI*tmp2)*tp+ave;
 #endif
 }
+
 template<typename DATA_T>
-void RNG<DATA_T>::generateStream(int NUM, hls::stream<DATA_T>&sRNG, DATA_T mean, DATA_T std){
+void RNG<DATA_T>::generateStream(uint NUM, hls::stream<DATA_T>&sRNG, DATA_T mean, DATA_T std){
 	for(int i = 0 ; i < NUM/2;i++){
 #pragma HLS PIPELINE
 		DATA_T r0, r1;
@@ -166,5 +169,8 @@ void RNG<DATA_T>::generateStream(int NUM, hls::stream<DATA_T>&sRNG, DATA_T mean,
 		sRNG.write(r1);
 	}
 }
+
 template class RNG<float>;
+#ifdef __DOUBLE_PRECISION__
 template class RNG<double>;
+#endif

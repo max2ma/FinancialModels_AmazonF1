@@ -27,14 +27,14 @@
 #include "defTypes.h"
 #include "stockData.h"
 
-template<int NUM_STEPS, int SIMS_PER_GROUP, typename DATA_T>
-void launchSimulation(DATA_T &pCall, DATA_T &pPut, RNG<DATA_T> &rng, blackScholes<NUM_STEPS, SIMS_PER_GROUP,DATA_T> &bs, int sims)
+template<int SIMS_PER_GROUP, typename DATA_T>
+void launchSimulation(DATA_T &pCall, DATA_T &pPut, RNG<DATA_T> &rng, blackScholes<SIMS_PER_GROUP,DATA_T> &bs, int nums, int sims, int steps)
 {
 #pragma HLS INLINE off
 #pragma HLS DATAFLOW
 		hls::stream<data_t> sRNG;
 #pragma HLS stream variable=sRNG depth=2
-		rng.generateStream(sims*NUM_STEPS, sRNG, 0, 1);
+		rng.generateStream(nums, sRNG, 0, 1);
 		bs.simulation(sRNG, sims, pCall, pPut);
 }
 
@@ -45,6 +45,7 @@ void blackEuro(data_t *pCall, data_t *pPut,   // call price and put price
 		data_t volatility,			// volatility of the risky asset
 		data_t initPrice,			// stock price at time 0
 		data_t strikePrice,// strike price
+		data_t steps,
 		data_t sims,
 		data_t seed)			
 {
@@ -62,18 +63,24 @@ void blackEuro(data_t *pCall, data_t *pPut,   // call price and put price
 #pragma HLS INTERFACE s_axilite port=initPrice bundle=control
 #pragma HLS INTERFACE s_axilite port=strikePrice bundle=gmem
 #pragma HLS INTERFACE s_axilite port=strikePrice bundle=control
+#pragma HLS INTERFACE s_axilite port=steps bundle=gmem
+#pragma HLS INTERFACE s_axilite port=steps bundle=control
 #pragma HLS INTERFACE s_axilite port=sims bundle=gmem
 #pragma HLS INTERFACE s_axilite port=sims bundle=control
 #pragma HLS INTERFACE s_axilite port=seed bundle=gmem
 #pragma HLS INTERFACE s_axilite port=seed bundle=control
 #pragma HLS INTERFACE s_axilite port=return bundle=control
 
-	static const int STEPS = 64, SIMS_PER_GROUP =32;
+#pragma HLS ALLOCATION instances=mul limit=1 operation
+#pragma HLS ALLOCATION instances=fmul limit=1 operation
+#pragma HLS ALLOCATION instances=fexp limit=1 operation
+#pragma HLS ALLOCATION instances=fdiv limit=1 operation
+	static const int SIMS_PER_GROUP =32;
 	data_t call, put;
 	stockData<data_t> sd(timeT,freeRate,volatility,initPrice,strikePrice);
-	blackScholes<STEPS, SIMS_PER_GROUP,data_t> bs(sd);
+	blackScholes<SIMS_PER_GROUP,data_t> bs(sd, steps);
 	RNG<data_t> rng(seed);
-	launchSimulation<STEPS, SIMS_PER_GROUP, data_t>(call, put, rng, bs, sims);
+	launchSimulation<SIMS_PER_GROUP, data_t>(call, put, rng, bs, (int)sims*(int)steps, sims, steps);
 	*pCall = call/sims;
 	*pPut = put/sims;
 }

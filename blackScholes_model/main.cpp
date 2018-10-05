@@ -175,7 +175,7 @@ int main(int argc, char** argv)
 		cl::CommandQueue commandQueue(context, devices[0]);
 
 		cl::Kernel kernel(program,Params::kernel_name);
-		auto kernelFunctor = cl::KernelFunctor<cl::Buffer,cl::Buffer,data_t, data_t,data_t,data_t,data_t,data_t, data_t>(kernel);
+		auto kernelFunctor = cl::KernelFunctor<cl::Buffer,cl::Buffer,data_t, data_t,data_t,data_t,data_t,data_t, data_t, data_t>(kernel);
 
 		cl::Buffer d_call(context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, 
 				sizeof(data_t), h_call.data());
@@ -196,7 +196,7 @@ int main(int argc, char** argv)
 		KERNEL_NAME(h_call, h_put, Params::time, Params::rate, Params::volatility, Params::initprice, Params::strikeprice);
 #else
 		cl::EnqueueArgs enqueueArgs(commandQueue,cl::NDRange(1),cl::NDRange(1));
-		cl::Event event = kernelFunctor(enqueueArgs, d_call,d_put, Params::time, Params::rate, Params::volatility, Params::initprice, Params::strikeprice, 1024, 0);
+		cl::Event event = kernelFunctor(enqueueArgs, d_call,d_put, Params::time, Params::rate, Params::volatility, Params::initprice, Params::strikeprice, 128, 1024, 0);
 
 		commandQueue.enqueueMigrateMemObjects(outBufVec,CL_MIGRATE_MEM_OBJECT_HOST);
 		commandQueue.finish();
