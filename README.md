@@ -5,6 +5,7 @@ This repository includes F1-optimized implementations of four Monte Carlo financ
   - the European and the European barrier options of the [Heston model][Heston Model]. 
 Further details can be found in the following paper. If you find this work useful for your research, please consider citing:
 
+
     @INPROCEEDINGS{7920245, 
       author={L. Ma and F. B. Muslim and L. Lavagno}, 
       booktitle={2016 European Modelling Symposium (EMS)}, 
