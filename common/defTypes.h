@@ -30,7 +30,6 @@
 #include <iostream>
 //using namespace std;
 
-typedef unsigned int uint;
 typedef float data_t;
 // This reduces the HW cost a lot, but slows down convergence too much.
 // typedef ap_fixed<64,32,AP_RND,AP_SAT> data_t;

@@ -51,17 +51,8 @@ limitations under the License.
 #include <unistd.h>
 #include <ctime>
 #include "defTypes.h"
-#ifdef PURE_C
-extern "C" 
-void KERNEL_NAME(data_t *call, data_t *put, data_t timeT, data_t freeRate, data_t volatility, data_t initPrice, data_t strikePrice);
-#else
 #include "xcl2.hpp"
-#endif
 
-#ifdef USE_PROTOBUF
-#include "bs.pb.h"
-#include <google/protobuf/text_format.h>
-#endif
 using namespace std;
 
 namespace Params 
@@ -80,10 +71,10 @@ void usage(char* name)
 }
 int main(int argc, char** argv)
 {
-	int opt;
+	int opt,NUM_CU=4, sims = 1024, steps=8;
 	double callR=-1, putR=-1;
 	bool flagc=false,flagp=false;
-	while((opt=getopt(argc,argv,"b:c:p:"))!=-1){
+	while((opt=getopt(argc,argv,"b:c:p:n:s:k:"))!=-1){
 		switch(opt){
 			case 'b':
 				Params::binary_name=optarg;
@@ -96,30 +87,26 @@ int main(int argc, char** argv)
 				putR=atof(optarg);
 				flagp=true;
 				break;
+			case 'n':
+				NUM_CU=atoi(optarg);
+				break;
+			case 's':
+				sims=atoi(optarg);
+				break;
+			case 'k':
+				steps=atoi(optarg);
+				break;
 			default:
 				usage(argv[0]);
 				return -1;
 		}
 	}
 
-#ifdef USE_PROTOBUF
-	parameters::blackScholes params;
-#endif
 	fstream is(KERNEL ".parameters", ios::in);
 	if(!is){
 		cerr << "Cannot open parameter file: " KERNEL ".parameters" <<endl;
 		return -1;
 	}
-#ifdef USE_PROTOBUF
-	const string str(istreambuf_iterator<char>(is), (istreambuf_iterator<char>()));
-	google::protobuf::TextFormat::ParseFromString(str, &params);
-
-	Params::time = params.time();
-	Params::rate == params.rate();
-	Params::volatility = params.volatility();
-	Params::initprice = params.initprice();
-	Params::strikeprice == params.strikeprice();
-#else
 	string line;
 	while (getline (is, line)) {
 		if (line.substr(0, strlen("initprice:")) == "initprice:") {
@@ -133,15 +120,11 @@ int main(int argc, char** argv)
 		} else if (line.substr(0, strlen("time:")) == "time:") {
 			Params::time = stod(line.substr(strlen("time:")+1));
 		} else if (line.substr(0, strlen("kernel_name:")) == "kernel_name:") {
-			//Params::kernel_name = line.substr(strlen("kernel_name:")+1).c_str();
+//			Params::kernel_name = line.substr(strlen("kernel_name:")+1).c_str();
 		} else {
 			cerr << "Unknown parameter: " << line << endl;
 		}
 	}
-#endif
-#ifdef PURE_C
-	data_t h_call[1], h_put[1];
-#else
 	try {
 		ifstream ifstr(Params::binary_name); 
 		if(!ifstr){
@@ -150,7 +133,8 @@ int main(int argc, char** argv)
 		}
 		const string programString(istreambuf_iterator<char>(ifstr),
 				(istreambuf_iterator<char>()));
-		vector<data_t,aligned_allocator<data_t>> h_call(1), h_put(1);
+//		static const int NUM_CU = 4;
+		vector<data_t,aligned_allocator<data_t>> h_call(NUM_CU), h_put(NUM_CU);
 		vector<cl::Platform> platforms;
 		cl::Platform::get(&platforms);
 
@@ -172,19 +156,17 @@ int main(int argc, char** argv)
 			else throw err;
 		}
 
-		cl::CommandQueue commandQueue(context, devices[0]);
+		cl::CommandQueue commandQueue(context, devices[0], CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE);
 
 		cl::Kernel kernel(program,Params::kernel_name);
-		auto kernelFunctor = cl::KernelFunctor<cl::Buffer,cl::Buffer,data_t, data_t,data_t,data_t,data_t,data_t, data_t, data_t>(kernel);
 
 		cl::Buffer d_call(context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, 
-				sizeof(data_t), h_call.data());
+				sizeof(data_t)*NUM_CU, h_call.data());
 		cl::Buffer d_put(context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, 
-				sizeof(data_t), h_put.data());
+				sizeof(data_t)*NUM_CU, h_put.data());
 		std::vector<cl::Memory> outBufVec;
 		outBufVec.push_back(d_call);
 		outBufVec.push_back(d_put);
-#endif
 		clock_t start = clock();
 		cout << "Starting execution. Time=" << Params::time
 			<< " rate=" << Params::rate 
@@ -192,40 +174,42 @@ int main(int argc, char** argv)
 			<< " initprice=" << Params::initprice 
 			<< " strikeprice=" << Params::strikeprice 
 			<< endl;
-#ifdef PURE_C
-		KERNEL_NAME(h_call, h_put, Params::time, Params::rate, Params::volatility, Params::initprice, Params::strikeprice);
-#else
+		cl::Event event[NUM_CU];
+		auto kernelFunctor = cl::KernelFunctor<cl::Buffer,cl::Buffer,data_t, data_t,data_t,data_t,data_t,data_t, data_t, data_t>(kernel);
 		cl::EnqueueArgs enqueueArgs(commandQueue,cl::NDRange(1),cl::NDRange(1));
-		cl::Event event = kernelFunctor(enqueueArgs, d_call,d_put, Params::time, Params::rate, Params::volatility, Params::initprice, Params::strikeprice, 128, 1024, 0);
+		for(int i=0;i<NUM_CU;i++){
+			event[i]= kernelFunctor(enqueueArgs, d_call,d_put, Params::time, Params::rate, Params::volatility, Params::initprice, Params::strikeprice, steps, sims, i);
+		}
+		commandQueue.finish();
+
 
 		commandQueue.enqueueMigrateMemObjects(outBufVec,CL_MIGRATE_MEM_OBJECT_HOST);
 		commandQueue.finish();
-		event.wait();
-		cl_ulong time_start, time_stop;
-		event.getProfilingInfo(CL_PROFILING_COMMAND_START, &time_start);
-		event.getProfilingInfo(CL_PROFILING_COMMAND_END, &time_stop);
-		double Seconds = (double)(time_stop  - time_start)/1e9;
-		cout << "Execution time "<< Seconds <<" s"<<endl;
-#endif
+		//		event.wait();
 		clock_t t = clock() - start;
 		cout << "Execution completed"<<endl;
 		cout << "Execution time "<< (float)t /CLOCKS_PER_SEC <<" s"<<endl;
 
-		cout<<"the call price is: "<<h_call[0]<<'\t';
+		data_t pCall=0, pPut=0;
+		for(int i=0;i<NUM_CU;i++){
+			pCall+= h_call[i];
+			pPut += h_put[i];
+		}
+		pCall/=NUM_CU;
+		pPut/=NUM_CU;
+		cout<<"the call price is: "<<pCall<<'\t';
 		if(flagc) {
-			cout<<"the difference with the reference value is "<<fabs(h_call[0]/callR-1)*100<<'%';
+			cout<<"the difference with the reference value is "<<fabs(pCall/callR-1)*100<<'%';
 		}
 		cout<<endl;
-		cout<<"the put price is: "<<h_put[0]<<'\t';
+		cout<<"the put price is: "<<pPut<<'\t';
 		if(flagp) {
 			cout<<"the difference with the reference value is "<<fabs(h_put[0]/putR-1)*100<<'%';
 		}
 		cout<<endl;
-#ifndef PURE_C
 	} catch (cl::Error err) {
 		cerr << "Error:\t" << err.what() << "\nCode:\t" << err.err() << endl;
 		return EXIT_FAILURE;
 	}
-#endif
 	return EXIT_SUCCESS;
 }

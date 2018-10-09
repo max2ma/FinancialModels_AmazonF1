@@ -47,7 +47,7 @@ void blackEuro(data_t *pCall, data_t *pPut,   // call price and put price
 		data_t strikePrice,// strike price
 		data_t steps,
 		data_t sims,
-		data_t seed)			
+		data_t g_id)			
 {
 #pragma HLS INTERFACE m_axi port=pCall bundle=gmem
 #pragma HLS INTERFACE s_axilite port=pCall bundle=control
@@ -67,8 +67,8 @@ void blackEuro(data_t *pCall, data_t *pPut,   // call price and put price
 #pragma HLS INTERFACE s_axilite port=steps bundle=control
 #pragma HLS INTERFACE s_axilite port=sims bundle=gmem
 #pragma HLS INTERFACE s_axilite port=sims bundle=control
-#pragma HLS INTERFACE s_axilite port=seed bundle=gmem
-#pragma HLS INTERFACE s_axilite port=seed bundle=control
+#pragma HLS INTERFACE s_axilite port=g_id bundle=gmem
+#pragma HLS INTERFACE s_axilite port=g_id bundle=control
 #pragma HLS INTERFACE s_axilite port=return bundle=control
 
 #pragma HLS ALLOCATION instances=mul limit=1 operation
@@ -79,8 +79,8 @@ void blackEuro(data_t *pCall, data_t *pPut,   // call price and put price
 	data_t call, put;
 	stockData<data_t> sd(timeT,freeRate,volatility,initPrice,strikePrice);
 	blackScholes<SIMS_PER_GROUP,data_t> bs(sd, steps);
-	RNG<data_t> rng(seed);
+	RNG<data_t> rng(g_id);
 	launchSimulation<SIMS_PER_GROUP, data_t>(call, put, rng, bs, (int)sims*(int)steps, sims, steps);
-	*pCall = call/sims;
-	*pPut = put/sims;
+	pCall[(int)g_id] = call/sims;
+	pPut[(int)g_id] = put/sims;
 }

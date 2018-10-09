@@ -51,10 +51,10 @@ class blackScholes
 		DATA_T sumCall=0.0f,sumPut=0.0f;
 
 		for(int k=0;k<sims/NUM_SIMS;k++) {
-			DATA_T stockPrice[NUM_SIMS];
 
+			DATA_T stockPrice[NUM_SIMS];
 			for(int j=0;j<NUM_SIMS;j++)
-#pragma HLS PIPELINE
+#pragma HLS UNROLL
 				stockPrice[j] = data.price;
 
 			for(int s=0; s <NUM_STEPS;s++){
@@ -66,7 +66,7 @@ class blackScholes
 			}
 
 			for(int j=0;j<NUM_SIMS;j++) {
-#pragma HLS PIPELINE
+#pragma HLS UNROLL
 				sumCall+=executeCall(stockPrice[j]);
 				sumPut+=executePut(stockPrice[j]);
 			}

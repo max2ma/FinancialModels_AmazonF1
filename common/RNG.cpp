@@ -24,6 +24,7 @@ limitations under the License.
  */
 
 #include "RNG.h"
+#include "ap_fixed.h"
 template<typename DATA_T>
 RNG<DATA_T>::RNG(){
 }
@@ -90,6 +91,8 @@ void RNG<DATA_T>::init_array(RNG* rng, uint* seed, const uint size)
 template<typename DATA_T>
 void RNG<DATA_T>::extract_number(uint *num1, uint *num2)
 {
+#pragma HLS DEPENDENCE variable=mt_e array inter RAW false
+#pragma HLS DEPENDENCE variable=mt_o array inter RAW false
 #pragma HLS INLINE
 	uint id1=increase(1), idm=increase(RNG_MH), idm1=increase(RNG_MHI);
 
@@ -141,13 +144,22 @@ void RNG<DATA_T>::BOX_MULLER(DATA_T *data1, DATA_T *data2,DATA_T ave, DATA_T dev
 {
 #pragma HLS INLINE
 	static const DATA_T _2PI= 2*3.14159265358979323846f;
-	static const DATA_T MINI_RNG = 2.328306e-10;
-	DATA_T tp,tmp1,tmp2;
-	uint num1,num2;
+//	static const DATA_T MINI_RNG = 2.328306e-10;
 
+#pragma HLS ALLOCATION instances=fmul limit=1 operation
+	uint num1,num2;
+	DATA_T tp,tmp1,tmp2;
 	extract_number(&num1,&num2);
+#if 1	
+	ap_ufixed<32,0> f_tmp1, f_tmp2;
+	f_tmp1(31, 0)=num1;
+	f_tmp2(31, 0)=num2;
+	tmp1 = f_tmp1.to_float();
+	tmp2 = f_tmp2.to_float();
+#else	
 	tmp1=num1*MINI_RNG;
 	tmp2=num2*MINI_RNG;
+#endif
 #ifdef __DOUBLE_PRECISION__
 	tp=sqrt(fmax(-2*log(tmp1),0)*deviation);
 	*data1=cos(_2PI*tmp2)*tp+ave;
