@@ -3,9 +3,9 @@
 This repository includes F1-optimized implementations of four Monte Carlo financial models, namely:
   - the European and the Asian options of the the [Black-Scholes model][Black-Scholes Model], 
   - the European and the European barrier options of the [Heston model][Heston Model]. 
-Further details can be found in the following paper. If you find this work useful for your research, please consider citing:
 
-    
+Further details can be found in the following paper. If you find this work useful for your research, please consider citing:
+  
       @INPROCEEDINGS{7920245, 
         author={L. Ma and F. B. Muslim and L. Lavagno}, 
         booktitle={2016 European Modelling Symposium (EMS)}, 
