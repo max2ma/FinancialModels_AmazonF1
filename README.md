@@ -17,7 +17,7 @@ Further details can be found in the following paper. If you find this work usefu
         }
       
       
- And
+ Or
     
     @ARTICLE{7859319, 
         author={F. B. Muslim and L. Ma and M. Roozmeh and L. Lavagno}, 
