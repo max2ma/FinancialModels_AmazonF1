@@ -46,22 +46,25 @@ class blackScholes
 	SqrtV(data.volatility * sqrtf(Dt)),
 	Interest(expf(-data.freeRate * data.timeT)){
 	}
-	void simulation(hls::stream<DATA_T>& s_RNG, int sims,  DATA_T &pCall, DATA_T &pPut)
+	void simulation(hls::stream<DATA_T>& s_RNG0,hls::stream<DATA_T>& s_RNG1, int sims,  DATA_T &pCall, DATA_T &pPut)
 	{
 		DATA_T sumCall=0.0f,sumPut=0.0f;
 
 		for(int k=0;k<sims/NUM_SIMS;k++) {
 
 			DATA_T stockPrice[NUM_SIMS];
+#pragma HLS ARRAY_PARTITION variable=stockPrice cyclic factor=2 dim=1
 			for(int j=0;j<NUM_SIMS;j++)
 #pragma HLS UNROLL
 				stockPrice[j] = data.price;
 
 			for(int s=0; s <NUM_STEPS;s++){
-				for(int j=0;j<NUM_SIMS;j++) {
+				for(int j=0;j<NUM_SIMS/2;j++) {
 #pragma HLS PIPELINE
-					DATA_T r = s_RNG.read();
-					update(stockPrice[j], r);
+					DATA_T r0 = s_RNG0.read();
+					DATA_T r1 = s_RNG1.read();
+					update(stockPrice[j*2], r0);
+					update(stockPrice[j*2+1], r1);
 				}
 			}
 

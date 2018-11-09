@@ -71,7 +71,7 @@ void usage(char* name)
 }
 int main(int argc, char** argv)
 {
-	int opt,NUM_CU=4, sims = 1024, steps=8;
+	int opt,NUM_CU=4, sims = 64, steps=128;
 	double callR=-1, putR=-1;
 	bool flagc=false,flagp=false;
 	while((opt=getopt(argc,argv,"b:c:p:n:s:k:"))!=-1){
