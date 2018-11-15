@@ -26,16 +26,9 @@
 #include "blackScholes.h"
 #include "defTypes.h"
 #include "stockData.h"
-
-template<typename DATA_T, typename BS>
-void launchSimulation(DATA_T &pCall, DATA_T &pPut, RNG<DATA_T> &rng0,RNG<DATA_T> &rng1, BS &bs, int nums, int sims, int steps)
+template<typename DATA_T>
+void prng(RNG<DATA_T> &rng0,RNG<DATA_T> &rng1, hls::stream<DATA_T> &sRNG0,hls::stream<DATA_T> &sRNG1, int nums)
 {
-#pragma HLS INLINE off
-#pragma HLS DATAFLOW
-	hls::stream<DATA_T> sRNG0;
-	hls::stream<DATA_T> sRNG1;
-#pragma HLS STREAM variable=sRNG0 depth=2 dim=1
-#pragma HLS STREAM variable=sRNG1 depth=2 dim=1
 	for(int i = 0 ; i < nums/4;i++){
 #pragma HLS PIPELINE
 		DATA_T r0, r1, r2, r3;
@@ -46,6 +39,16 @@ void launchSimulation(DATA_T &pCall, DATA_T &pPut, RNG<DATA_T> &rng0,RNG<DATA_T>
 		sRNG1.write(r1);
 		sRNG1.write(r3);
 	}
+}
+template<typename DATA_T, typename BS>
+void launchSimulation(DATA_T &pCall, DATA_T &pPut, RNG<DATA_T> &rng0,RNG<DATA_T> &rng1, BS &bs, int sims, int steps)
+{
+#pragma HLS DATAFLOW
+	hls::stream<DATA_T> sRNG0;
+	hls::stream<DATA_T> sRNG1;
+#pragma HLS STREAM variable=sRNG0 depth=2 dim=1
+#pragma HLS STREAM variable=sRNG1 depth=2 dim=1
+	prng(rng0, rng1, sRNG0, sRNG1, sims*steps);
 	bs.simulation(sRNG0,sRNG1, sims, pCall, pPut);
 }
 
@@ -84,7 +87,7 @@ void blackEuro(data_t *pCall, data_t *pPut,   // call price and put price
 	blackScholes<SIMS_PER_GROUP,data_t> bs(sd, steps);
 	RNG<data_t> rng0(g_id);
 	RNG<data_t> rng1(~((int)g_id+1));
-	launchSimulation(call, put, rng0,rng1, bs, (int)sims*(int)steps, sims, steps);
+	launchSimulation(call, put, rng0,rng1, bs, sims, steps);
 	pCall[(int)g_id] = call/sims;
 	pPut[(int)g_id] = put/sims;
 }

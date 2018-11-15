@@ -33,6 +33,8 @@ RNG<DATA_T>::RNG(){
 
 template<typename DATA_T>
 RNG<DATA_T>::RNG(uint seed){
+//#pragma HLS ARRAY_PARTITION variable=mt_o block factor=2 dim=1
+//#pragma HLS ARRAY_PARTITION variable=mt_e block factor=2 dim=1
 	this->index = 0;
 	this->seed=seed;
 	uint tmp=seed;
@@ -93,8 +95,8 @@ void RNG<DATA_T>::init_array(RNG* rng, uint* seed, const uint size)
 template<typename DATA_T>
 void RNG<DATA_T>::extract_number(uint *num1, uint *num2)
 {
-#pragma HLS DEPENDENCE variable=mt_e array inter RAW false
-#pragma HLS DEPENDENCE variable=mt_o array inter RAW false
+//#pragma HLS DEPENDENCE variable=mt_e array inter RAW false
+//#pragma HLS DEPENDENCE variable=mt_o array inter RAW false
 #pragma HLS INLINE
 	uint id1=increase(1), idm=increase(RNG_MH), idm1=increase(RNG_MHI);
 

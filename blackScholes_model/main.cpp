@@ -71,7 +71,7 @@ void usage(char* name)
 }
 int main(int argc, char** argv)
 {
-	int opt,NUM_CU=4, sims = 64, steps=128;
+	int opt,NUM_CU=32, sims = 1024, steps=128;
 	double callR=-1, putR=-1;
 	bool flagc=false,flagp=false;
 	while((opt=getopt(argc,argv,"b:c:p:n:s:k:"))!=-1){
@@ -195,8 +195,8 @@ int main(int argc, char** argv)
 			pCall+= h_call[i];
 			pPut += h_put[i];
 		}
-		pCall/=NUM_CU;
-		pPut/=NUM_CU;
+		pCall/=NUM_CU*expf(Params::rate*Params::time);
+		pPut/=NUM_CU*expf(Params::rate*Params::time);
 		cout<<"the call price is: "<<pCall<<'\t';
 		if(flagc) {
 			cout<<"the difference with the reference value is "<<fabs(pCall/callR-1)*100<<'%';
