@@ -27,10 +27,14 @@ limitations under the License.
 #include "ap_fixed.h"
 template<typename DATA_T>
 RNG<DATA_T>::RNG(){
+//#pragma HLS ARRAY_PARTITION variable=mt_o cyclic factor=2 dim=1
+//#pragma HLS ARRAY_PARTITION variable=mt_e cyclic factor=2 dim=1
 }
 
 template<typename DATA_T>
 RNG<DATA_T>::RNG(uint seed){
+//#pragma HLS ARRAY_PARTITION variable=mt_o block factor=2 dim=1
+//#pragma HLS ARRAY_PARTITION variable=mt_e block factor=2 dim=1
 	this->index = 0;
 	this->seed=seed;
 	uint tmp=seed;
@@ -91,8 +95,8 @@ void RNG<DATA_T>::init_array(RNG* rng, uint* seed, const uint size)
 template<typename DATA_T>
 void RNG<DATA_T>::extract_number(uint *num1, uint *num2)
 {
-#pragma HLS DEPENDENCE variable=mt_e array inter RAW false
-#pragma HLS DEPENDENCE variable=mt_o array inter RAW false
+//#pragma HLS DEPENDENCE variable=mt_e array inter RAW false
+//#pragma HLS DEPENDENCE variable=mt_o array inter RAW false
 #pragma HLS INLINE
 	uint id1=increase(1), idm=increase(RNG_MH), idm1=increase(RNG_MHI);
 
@@ -146,7 +150,6 @@ void RNG<DATA_T>::BOX_MULLER(DATA_T *data1, DATA_T *data2,DATA_T ave, DATA_T dev
 	static const DATA_T _2PI= 2*3.14159265358979323846f;
 //	static const DATA_T MINI_RNG = 2.328306e-10;
 
-#pragma HLS ALLOCATION instances=fmul limit=1 operation
 	uint num1,num2;
 	DATA_T tp,tmp1,tmp2;
 	extract_number(&num1,&num2);
@@ -171,16 +174,6 @@ void RNG<DATA_T>::BOX_MULLER(DATA_T *data1, DATA_T *data2,DATA_T ave, DATA_T dev
 #endif
 }
 
-template<typename DATA_T>
-void RNG<DATA_T>::generateStream(uint NUM, hls::stream<DATA_T>&sRNG, DATA_T mean, DATA_T std){
-	for(int i = 0 ; i < NUM/2;i++){
-#pragma HLS PIPELINE
-		DATA_T r0, r1;
-		this->BOX_MULLER(&r0, &r1, mean, std);
-		sRNG.write(r0);
-		sRNG.write(r1);
-	}
-}
 
 template class RNG<float>;
 #ifdef __DOUBLE_PRECISION__

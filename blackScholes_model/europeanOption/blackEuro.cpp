@@ -26,19 +26,33 @@
 #include "blackScholes.h"
 #include "defTypes.h"
 #include "stockData.h"
-
-template<int SIMS_PER_GROUP, typename DATA_T>
-void launchSimulation(DATA_T &pCall, DATA_T &pPut, RNG<DATA_T> &rng, blackScholes<SIMS_PER_GROUP,DATA_T> &bs, int nums, int sims, int steps)
+template<typename DATA_T>
+void prng(RNG<DATA_T> &rng0,RNG<DATA_T> &rng1, hls::stream<DATA_T> &sRNG0,hls::stream<DATA_T> &sRNG1, int nums)
 {
-#pragma HLS INLINE off
+	for(int i = 0 ; i < nums/4;i++){
+#pragma HLS PIPELINE
+		DATA_T r0, r1, r2, r3;
+		rng0.BOX_MULLER(&r0, &r1, 0, 1);
+		rng1.BOX_MULLER(&r2, &r3, 0, 1);
+		sRNG0.write(r0);
+		sRNG0.write(r2);
+		sRNG1.write(r1);
+		sRNG1.write(r3);
+	}
+}
+template<typename DATA_T, typename BS>
+void launchSimulation(DATA_T &pCall, DATA_T &pPut, RNG<DATA_T> &rng0,RNG<DATA_T> &rng1, BS &bs, int sims, int steps)
+{
 #pragma HLS DATAFLOW
-		hls::stream<data_t> sRNG;
-#pragma HLS stream variable=sRNG depth=2
-		rng.generateStream(nums, sRNG, 0, 1);
-		bs.simulation(sRNG, sims, pCall, pPut);
+	hls::stream<DATA_T> sRNG0;
+	hls::stream<DATA_T> sRNG1;
+#pragma HLS STREAM variable=sRNG0 depth=2 dim=1
+#pragma HLS STREAM variable=sRNG1 depth=2 dim=1
+	prng(rng0, rng1, sRNG0, sRNG1, sims*steps);
+	bs.simulation(sRNG0,sRNG1, sims, pCall, pPut);
 }
 
-extern "C"
+	extern "C"
 void blackEuro(data_t *pCall, data_t *pPut,   // call price and put price
 		data_t timeT,				// time period of options
 		data_t freeRate,			// interest rate of the riskless asset
@@ -53,21 +67,13 @@ void blackEuro(data_t *pCall, data_t *pPut,   // call price and put price
 #pragma HLS INTERFACE s_axilite port=pCall bundle=control
 #pragma HLS INTERFACE m_axi port=pPut bundle=gmem
 #pragma HLS INTERFACE s_axilite port=pPut bundle=control
-#pragma HLS INTERFACE s_axilite port=timeT bundle=gmem
 #pragma HLS INTERFACE s_axilite port=timeT bundle=control
-#pragma HLS INTERFACE s_axilite port=freeRate bundle=gmem
 #pragma HLS INTERFACE s_axilite port=freeRate bundle=control
-#pragma HLS INTERFACE s_axilite port=volatility bundle=gmem
 #pragma HLS INTERFACE s_axilite port=volatility bundle=control
-#pragma HLS INTERFACE s_axilite port=initPrice bundle=gmem
 #pragma HLS INTERFACE s_axilite port=initPrice bundle=control
-#pragma HLS INTERFACE s_axilite port=strikePrice bundle=gmem
 #pragma HLS INTERFACE s_axilite port=strikePrice bundle=control
-#pragma HLS INTERFACE s_axilite port=steps bundle=gmem
 #pragma HLS INTERFACE s_axilite port=steps bundle=control
-#pragma HLS INTERFACE s_axilite port=sims bundle=gmem
 #pragma HLS INTERFACE s_axilite port=sims bundle=control
-#pragma HLS INTERFACE s_axilite port=g_id bundle=gmem
 #pragma HLS INTERFACE s_axilite port=g_id bundle=control
 #pragma HLS INTERFACE s_axilite port=return bundle=control
 
@@ -79,8 +85,9 @@ void blackEuro(data_t *pCall, data_t *pPut,   // call price and put price
 	data_t call, put;
 	stockData<data_t> sd(timeT,freeRate,volatility,initPrice,strikePrice);
 	blackScholes<SIMS_PER_GROUP,data_t> bs(sd, steps);
-	RNG<data_t> rng(g_id);
-	launchSimulation<SIMS_PER_GROUP, data_t>(call, put, rng, bs, (int)sims*(int)steps, sims, steps);
+	RNG<data_t> rng0(g_id);
+	RNG<data_t> rng1(~((int)g_id+1));
+	launchSimulation(call, put, rng0,rng1, bs, sims, steps);
 	pCall[(int)g_id] = call/sims;
 	pPut[(int)g_id] = put/sims;
 }

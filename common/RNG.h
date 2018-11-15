@@ -72,7 +72,6 @@ class RNG
 	void BOX_MULLER(DATA_T*, DATA_T*,DATA_T, DATA_T);
 	uint increase(uint);
 	uint & operator ++();
-	void generateStream(uint, hls::stream<DATA_T>&, DATA_T, DATA_T);
 
 	static void init_array(RNG*, uint*,const uint);
 };

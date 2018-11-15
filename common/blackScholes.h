@@ -37,46 +37,63 @@ class blackScholes
 {
 	const stockData<DATA_T> data;
 	const int NUM_STEPS;
-	const DATA_T Dt, Vol, SqrtV, Interest;
+	const DATA_T Dt, SqrtV, Rdt;
 	public:
 	blackScholes(stockData<DATA_T>&data, int num_steps):data(data),
 	NUM_STEPS(num_steps),
 	Dt(data.timeT / (DATA_T)NUM_STEPS),
-	Vol(expf((data.freeRate- 0.5f * data.volatility * data.volatility)*Dt)),
-	SqrtV(data.volatility * sqrtf(Dt)),
-	Interest(expf(-data.freeRate * data.timeT)){
+	Rdt(1+data.freeRate*Dt),
+	SqrtV(data.volatility * sqrtf(Dt)){
 	}
-	void simulation(hls::stream<DATA_T>& s_RNG, int sims,  DATA_T &pCall, DATA_T &pPut)
+
+	void simulation(hls::stream<DATA_T>& s_RNG0,hls::stream<DATA_T>& s_RNG1, int sims,  DATA_T &pCall, DATA_T &pPut)
 	{
-		DATA_T sumCall=0.0f,sumPut=0.0f;
+		DATA_T call = 0, put = 0;
+		hls::stream<DATA_T> prices;
+#pragma HLS STREAM variable=prices depth=NUM_SIMS dim=1
+#pragma HLS DATAFLOW
+		path_sim(s_RNG0, s_RNG1, prices, sims);
+		sum(prices, call, put, sims);
+		pCall= call;
+		pPut = put;
+	}
+	void path_sim(hls::stream<DATA_T>& s_RNG0,hls::stream<DATA_T>& s_RNG1, hls::stream<DATA_T>& prices, int sims){
+		DATA_T stockPrice[NUM_SIMS];
+#pragma HLS ARRAY_PARTITION variable=stockPrice cyclic factor=2 dim=1
+		for(int j=0;j<NUM_SIMS;j++)
+#pragma HLS PIPELINE
+			stockPrice[j] = data.price;
 
 		for(int k=0;k<sims/NUM_SIMS;k++) {
-
-			DATA_T stockPrice[NUM_SIMS];
-			for(int j=0;j<NUM_SIMS;j++)
-#pragma HLS UNROLL
-				stockPrice[j] = data.price;
-
 			for(int s=0; s <NUM_STEPS;s++){
-				for(int j=0;j<NUM_SIMS;j++) {
+				for(int j=0;j<NUM_SIMS/2;j++) {
 #pragma HLS PIPELINE
-					DATA_T r = s_RNG.read();
-					update(stockPrice[j], r);
+					DATA_T r0 = s_RNG0.read();
+					DATA_T r1 = s_RNG1.read();
+					update(stockPrice[j*2], r0);
+					update(stockPrice[j*2+1], r1);
 				}
 			}
-
-			for(int j=0;j<NUM_SIMS;j++) {
-#pragma HLS UNROLL
-				sumCall+=executeCall(stockPrice[j]);
-				sumPut+=executePut(stockPrice[j]);
+			for(int j=0;j<NUM_SIMS;j++){
+#pragma HLS DEPENDENCE variable=stockPrice array inter RAW false
+#pragma HLS PIPELINE
+				prices.write(stockPrice[j]);
+				stockPrice[j] = data.price;
 			}
 		}
-		pCall=Interest * sumCall;
-		pPut =Interest * sumPut;
+	}
+	void sum(hls::stream<DATA_T> &prices, DATA_T &call, DATA_T&put, int sims){
+		for(int j=0;j<sims;j++) {
+#pragma HLS PIPELINE
+			DATA_T price = prices.read();
+			call+=executeCall(price);
+			put+=executePut(price);
+		}
 	}
 	void update(DATA_T& price, const DATA_T &r){
 #pragma HLS INLINE
-		price *= Vol * expf(r *SqrtV);
+		//		price *= Vol * expf(r *SqrtV);
+		price *= Rdt +r *SqrtV;
 	}
 	DATA_T executeCall(DATA_T& price){
 #pragma HLS INLINE
@@ -87,7 +104,7 @@ class blackScholes
 			return 0;
 	}
 	DATA_T executePut(DATA_T& price){
-	#pragma HLS INLINE
+#pragma HLS INLINE
 		if(price < data.strikePrice){
 			return (data.strikePrice - price);
 		}
