@@ -30,21 +30,17 @@
 #define __BLACKSCHOLES__
 #include "hls_stream.h"
 #include "stockData.h"
+#include "hls_math.h"
 using namespace std;
 
-template<int NUM_SIMS, typename DATA_T>
+template<int NUM_SIMS, typename OptionStatus,  typename DATA_T>
 class blackScholes
 {
 	const stockData<DATA_T> data;
 	const int NUM_STEPS;
-	const DATA_T Dt, SqrtV, Rdt;
 	public:
 	blackScholes(stockData<DATA_T>&data, int num_steps):data(data),
-	NUM_STEPS(num_steps),
-	Dt(data.timeT / (DATA_T)NUM_STEPS),
-	Rdt(1+data.freeRate*Dt),
-	SqrtV(data.volatility * sqrtf(Dt)){
-	}
+	NUM_STEPS(num_steps){}
 
 	void simulation(hls::stream<DATA_T>& s_RNG0,hls::stream<DATA_T>& s_RNG1, int sims,  DATA_T &pCall, DATA_T &pPut)
 	{
@@ -58,11 +54,11 @@ class blackScholes
 		pPut = put;
 	}
 	void path_sim(hls::stream<DATA_T>& s_RNG0,hls::stream<DATA_T>& s_RNG1, hls::stream<DATA_T>& prices, int sims){
-		DATA_T stockPrice[NUM_SIMS];
+		OptionStatus stockPrice[NUM_SIMS];
 #pragma HLS ARRAY_PARTITION variable=stockPrice cyclic factor=2 dim=1
 		for(int j=0;j<NUM_SIMS;j++)
 #pragma HLS PIPELINE
-			stockPrice[j] = data.price;
+			stockPrice[j].init(data.price);
 
 		for(int k=0;k<sims/NUM_SIMS;k++) {
 			for(int s=0; s <NUM_STEPS;s++){
@@ -77,10 +73,19 @@ class blackScholes
 			for(int j=0;j<NUM_SIMS;j++){
 #pragma HLS DEPENDENCE variable=stockPrice array inter RAW false
 #pragma HLS PIPELINE
-				prices.write(stockPrice[j]);
-				stockPrice[j] = data.price;
+				DATA_T price = stockPrice[j].valid? stockPrice[j].price():data.strikePrice;
+				prices.write(price);
+				stockPrice[j].init(data.price);
 			}
 		}
+	}
+	void update(OptionStatus &option, DATA_T r){
+#pragma HLS INLINE
+		const DATA_T Dt = data.timeT / (DATA_T)NUM_STEPS,
+					Rdt = 1+data.freeRate*Dt,
+					SqrtV = data.volatility * sqrtf(Dt);
+		option.stockPrice *= Rdt +r *SqrtV;
+		option.update();
 	}
 	void sum(hls::stream<DATA_T> &prices, DATA_T &call, DATA_T&put, int sims){
 		for(int j=0;j<sims;j++) {
@@ -89,11 +94,6 @@ class blackScholes
 			call+=executeCall(price);
 			put+=executePut(price);
 		}
-	}
-	void update(DATA_T& price, const DATA_T &r){
-#pragma HLS INLINE
-		//		price *= Vol * expf(r *SqrtV);
-		price *= Rdt +r *SqrtV;
 	}
 	DATA_T executeCall(DATA_T& price){
 #pragma HLS INLINE
