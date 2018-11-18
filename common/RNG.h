@@ -31,6 +31,7 @@ limitations under the License.
 #pragma once
 #include <cmath>
 #include "hls_stream.h"
+#include "ap_fixed.h"
 template<typename DATA_T>
 class RNG
 {
@@ -65,14 +66,133 @@ class RNG
 	uint seed;
 	uint mt_e[RNG_H],mt_o[RNG_H];
 
-	RNG();
-	RNG(uint);
-	void init(uint);
-	void extract_number(uint*,uint*);
-	void BOX_MULLER(DATA_T*, DATA_T*,DATA_T, DATA_T);
-	uint increase(uint);
-	uint & operator ++();
+	RNG(){}
+	RNG(uint seed){
+		this->index = 0;
+		this->seed=seed;
+		uint tmp=seed;
 
-	static void init_array(RNG*, uint*,const uint);
+		for (int i = 0; i < RNG_H; i++)
+		{
+#pragma HLS PIPELINE off
+			mt_e[i]=tmp;
+			tmp= RNG_F*(tmp^ (tmp >> (RNG_W - 2))) + (i>>1) +1;
+			mt_o[i]=tmp;
+			tmp= RNG_F*(tmp^ (tmp >> (RNG_W - 2))) + (i>>1) +2;
+		}
+	}
+	void init(uint seed){
+#pragma HLS INLINE
+		this->index = 0;
+		this->seed=seed;
+		uint tmp=seed;
+
+		for (int i = 0; i < RNG_H; i++)
+		{
+			mt_e[i]=tmp;
+			tmp= RNG_F*(tmp^ (tmp >> (RNG_W - 2))) + i*2+1;
+			mt_o[i]=tmp;
+			tmp= RNG_F*(tmp^ (tmp >> (RNG_W - 2))) + i*2+2;
+		}
+	}
+
+	void extract_number(uint* num1,uint* num2){
+#pragma HLS INLINE
+		uint id1=increase(1), idm=increase(RNG_MH), idm1=increase(RNG_MHI);
+
+		uint x = this->seed,x1=this->mt_o[this->index],x2=this->mt_e[id1],
+				 xm=this->mt_o[idm],xm1=this->mt_e[idm1];
+
+		x = (x & upper_mask)+(x1 & lower_mask);
+		uint xp = x >> 1;
+		if ((x & 0x01) != 0)
+			xp ^= RNG_A;
+		x = xm ^ xp;
+
+		uint y = x;
+		y ^= ((y >> RNG_U)&RNG_D);
+		y ^= ((y << RNG_S)&RNG_B);
+		y ^= ((y << RNG_T)&RNG_C);
+		y ^= (y >> RNG_L);
+		*num1 = y;
+		mt_e[this->index]=x;
+
+		x1 =( x1 & upper_mask) + (x2 & lower_mask);
+		uint xt = x1 >> 1;
+		if ((x1 &0x01) != 0)
+			xt ^= RNG_A;
+		x1 = xm1 ^ xt;
+
+		uint y1 = x1;
+		y1 ^= ((y1 >> RNG_U)&RNG_D);
+		y1 ^= ((y1 << RNG_S)&RNG_B);
+		y1 ^= ((y1 << RNG_T)&RNG_C);
+		y1 ^= (y1 >> RNG_L);
+		*num2 = y1;
+		mt_o[this->index]=x1;
+
+		this->index=id1;
+		this->seed=x2;
+	}
+
+	void BOX_MULLER(DATA_T*data1, DATA_T*data2,DATA_T ave, DATA_T deviation){
+#pragma HLS INLINE
+		static const DATA_T _2PI= 2*3.14159265358979323846f;
+		//	static const DATA_T MINI_RNG = 2.328306e-10;
+
+		uint num1,num2;
+		DATA_T tp,tmp1,tmp2;
+		extract_number(&num1,&num2);
+#if 1	
+		ap_ufixed<32,0> f_tmp1, f_tmp2;
+		f_tmp1(31, 0)=num1;
+		f_tmp2(31, 0)=num2;
+		tmp1 = f_tmp1.to_float();
+		tmp2 = f_tmp2.to_float();
+#else	
+		tmp1=num1*MINI_RNG;
+		tmp2=num2*MINI_RNG;
+#endif
+#ifdef __DOUBLE_PRECISION__
+		tp=sqrt(fmax(-2*log(tmp1),0)*deviation);
+		*data1=cos(_2PI*tmp2)*tp+ave;
+		*data2=sin(_2PI*tmp2)*tp+ave;
+#else
+		tp=sqrtf(fmaxf(-2.0f*logf(tmp1),0.0f)*deviation);
+		*data1=cosf(_2PI*tmp2)*tp+ave;
+		*data2=sinf(_2PI*tmp2)*tp+ave;
+#endif
+	}
+	uint increase(uint k){
+		uint tmp= this->index+k;
+		return (tmp>=RNG_H)? tmp-RNG_H:tmp;
+	}
+
+	static void init_array(RNG* rng, uint* seed,const uint size){
+		uint tmp[size];
+#pragma HLS ARRAY_PARTITION variable=tmp complete dim=1
+
+		for(int i=0;i<size;i++)
+		{
+#pragma HLS UNROLL
+			rng[i].index = 0;
+			rng[i].seed=seed[i];
+			tmp[i]=seed[i];
+		}
+
+
+		for (int i = 0; i < RNG_H; i++)
+		{
+			for(int k=0;k<size;k++)
+			{
+#pragma HLS UNROLL
+				rng[k].mt_e[i]=tmp[k];
+				tmp[k]= RNG_F*(tmp[k]^ (tmp[k] >> (RNG_W - 2))) + i*2+1;
+				rng[k].mt_o[i]=tmp[k];
+				tmp[k]= RNG_F*(tmp[k]^ (tmp[k] >> (RNG_W - 2))) + i*2+2;
+			}
+		}
+	}
+
 };
 
