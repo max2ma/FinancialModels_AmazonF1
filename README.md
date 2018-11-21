@@ -128,12 +128,10 @@ In all cases, the enclosed Makefile can be used to compile the models. For examp
   cd blackScholes_model/europeanOption
   source <path to SDSoc v2017.1>/.settings64-SDx.sh
   export SDACCEL_DIR=<path to aws-fpga>/SDAccel
-  export COMMON_REPO=$SDACCEL_DIR/examples/xilinx/
   export PLATFORM=xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0
   export AWS_PLATFORM=$SDACCEL_DIR/aws_platform/xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0/xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0.xpfm
   make TARGETS=hw DEVICES=$AWS_PLATFORM all
   ```
-compiles the code and generates the F1-targeted bitstream for the European option of the Black-Scholes model. Environment variable ```COMMON_REPO``` must point to the ```examples/xilinx``` sub-directory of the folder where the AWS development kit github has been checked out.
 
 For purely SW execution, a target ```pure_c``` has been added to the Makefiles. It compiles the main and the kernel using purely C++ and runs it on the local CPU.
 

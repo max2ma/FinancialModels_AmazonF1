@@ -1,3 +1,4 @@
+COMMON_REPO:=$(AWS_FPGA_REPO_DIR)/SDAccel/examples/xilinx/
 COMMON_DIR:=../../common
 PLATFORM=xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0
 
