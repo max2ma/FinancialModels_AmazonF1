@@ -74,7 +74,7 @@ class RNG
 
 		for (int i = 0; i < RNG_H; i++)
 		{
-#pragma HLS PIPELINE off
+#pragma HLS PIPELINE
 			mt_e[i]=tmp;
 			tmp= RNG_F*(tmp^ (tmp >> (RNG_W - 2))) + (i>>1) +1;
 			mt_o[i]=tmp;
@@ -82,7 +82,6 @@ class RNG
 		}
 	}
 	void init(uint seed){
-#pragma HLS INLINE
 		this->index = 0;
 		this->seed=seed;
 		uint tmp=seed;
@@ -135,6 +134,25 @@ class RNG
 		this->seed=x2;
 	}
 
+	static void BOX_MULLER(hls::stream<uint>&num0,hls::stream<uint>&num1,
+			hls::stream<DATA_T>&data0,hls::stream<DATA_T>&data1, int rep){
+		static const DATA_T _2PI= 2*3.14159265358979323846f;
+		for(int i = 0; i<rep;i++){
+#pragma HLS PIPELINE
+			DATA_T tp,tmp1,tmp2;
+			ap_ufixed<32,0> f_tmp1, f_tmp2;
+			f_tmp1(31, 0)=num0.read();
+			f_tmp2(31, 0)=num1.read();
+			tmp1 = f_tmp1.to_float();
+			tmp2 = f_tmp2.to_float();
+			tp=sqrtf(fmaxf(-2.0f*logf(tmp1),0.0f));
+			DATA_T g0=cosf(_2PI*tmp2)*tp;
+			DATA_T g1=sinf(_2PI*tmp2)*tp;
+			data0.write(g0);
+			data1.write(g1);
+		}
+	}
+
 	void BOX_MULLER(DATA_T*data1, DATA_T*data2,DATA_T ave, DATA_T deviation){
 #pragma HLS INLINE
 		static const DATA_T _2PI= 2*3.14159265358979323846f;
@@ -143,16 +161,11 @@ class RNG
 		uint num1,num2;
 		DATA_T tp,tmp1,tmp2;
 		extract_number(&num1,&num2);
-#if 1	
 		ap_ufixed<32,0> f_tmp1, f_tmp2;
 		f_tmp1(31, 0)=num1;
 		f_tmp2(31, 0)=num2;
 		tmp1 = f_tmp1.to_float();
 		tmp2 = f_tmp2.to_float();
-#else	
-		tmp1=num1*MINI_RNG;
-		tmp2=num2*MINI_RNG;
-#endif
 #ifdef __DOUBLE_PRECISION__
 		tp=sqrt(fmax(-2*log(tmp1),0)*deviation);
 		*data1=cos(_2PI*tmp2)*tp+ave;
