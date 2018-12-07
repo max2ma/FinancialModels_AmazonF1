@@ -7,7 +7,6 @@
 #ifndef __VOLDATA_H__
 #define __VOLDATA_H__
 
-#include "defTypes.h"
 template<typename DATA_T>
 class volData
 {

@@ -7,7 +7,6 @@
 #ifndef __BARRIERDATA_H__
 #define __BARRIERDATA_H__
 
-#include "../common/defTypes.h"
 template<typename DATA_T>
 class barrierData
 {
