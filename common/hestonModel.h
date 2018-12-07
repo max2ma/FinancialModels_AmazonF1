@@ -8,10 +8,15 @@ class heston
 	const stockData<DATA_T> data;
 	const volData<DATA_T> vol;
 	const int NUM_STEPS;
+	const DATA_T rho1, Dt, rdt, ktdt;
 
 	public:
 	heston(stockData<DATA_T> &data,volData<DATA_T> &vol, const int steps)
-		:data(data),vol(vol),NUM_STEPS(steps){
+		:data(data),vol(vol),NUM_STEPS(steps),
+		Dt(data.timeT/NUM_STEPS),
+		rdt(Dt*data.freeRate),
+		ktdt(vol.kappa*vol.expect*Dt),
+		rho1(sqrtf(1.0f-vol.correlation*vol.correlation)){
 		}
 
 	void simulation(hls::stream<DATA_T>& s_RNG0,hls::stream<DATA_T>& s_RNG1, int sims, DATA_T &pCall, DATA_T &pPut){
@@ -35,10 +40,8 @@ class heston
 			stocks[s].init(data.price, vol.initValue);
 		}
 
-		for(int j=0;j<sims/NUM_SIMS;j++)
-		{
-			for(int path=0;path<NUM_STEPS;path++)
-			{
+		for(int j=0;j<sims/NUM_SIMS;j++){
+			for(int path=0;path<NUM_STEPS;path++){
 				for(int s=0;s<NUM_SIMS;s++)
 				{
 #pragma HLS PIPELINE
@@ -59,14 +62,9 @@ class heston
 	}
 	void update(OptionStatus &stocks, DATA_T num0, DATA_T num1){
 #pragma HLS INLINE
-		const DATA_T Dt=data.timeT/NUM_STEPS,
-					rho1=sqrtf(fmaxf(1.0f-vol.correlation*vol.correlation,0.0f)),
-					rdt=Dt*data.freeRate,
-					ktdt=vol.kappa*vol.expect*Dt;
-
 		DATA_T sqrtV = sqrtf(stocks.volatility* Dt);
 		stocks.stockPrice*=1 + rdt + sqrtV * (vol.correlation * num0 + rho1 * num1);
-//		stocks.stockPrice*=expf(rdt -0.5*stocks.volatility*Dt + sqrtV * (vol.correlation * num0 + rho1 * num1));
+		//		stocks.stockPrice*=expf(rdt -0.5*stocks.volatility*Dt + sqrtV * (vol.correlation * num0 + rho1 * num1));
 		stocks.update();
 		stocks.volatility+=ktdt-vol.kappa*stocks.volatility*Dt+vol.variance*num0*sqrtV;
 		stocks.volatility=fmaxf(stocks.volatility,0.0f);
