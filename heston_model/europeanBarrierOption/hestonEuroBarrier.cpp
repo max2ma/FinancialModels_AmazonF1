@@ -41,9 +41,9 @@ void hestonEuroBarrier(float *pCall, float *pPut,   // call price and put price
 		float strikePrice,			// strike price
 		float upB,				// up barrier
 		float lowB,				// low barrier
-		float sims,
-		float steps,
-		float g_id
+		int sims,
+		int steps,
+		int g_id
 		)
 {
 #pragma HLS INTERFACE m_axi port=pCall bundle=gmem
@@ -67,18 +67,72 @@ void hestonEuroBarrier(float *pCall, float *pPut,   // call price and put price
 #pragma HLS INTERFACE s_axilite port=g_id bundle=control
 #pragma HLS INTERFACE s_axilite port=return bundle=control
 
-	static const int NUM_SIMS = 64;
+#pragma HLS ALLOCATION instances=mul limit=1 operation
+#pragma HLS ALLOCATION instances=fmul limit=1 operation
+#pragma HLS ALLOCATION instances=fdiv limit=1 operation
+
+	static const int NUM_SIMS = 128;
+	const int each_sims = sims >> 3;
 	volData<float> vol(expect,kappa,variance,volatility,correlation);
 	stockData<float> sd(timeT,freeRate,volatility,initPrice,strikePrice);
 	barrierData<float> bD(upB,lowB);
 	EuropeanBarrierOptionStatus<float>::bData=bD;
-	heston<NUM_SIMS, EuropeanBarrierOptionStatus<float>, float> hs(sd,vol, steps);
-	float call,put;
-	RNG<float> rng0(g_id);
-	RNG<float> rng1(~((int)g_id+1));
-	launchSimulation(call, put, rng0, rng1, hs, 2*int(sims)*int(steps), sims, steps);
-	pCall[int(g_id)]=call/sims;
-	pPut[int(g_id)]=put/sims;
+
+	float call0, put0;
+	heston<NUM_SIMS, EuropeanBarrierOptionStatus<float>, float> hs0(sd,vol, steps);
+	float call1, put1;
+	heston<NUM_SIMS, EuropeanBarrierOptionStatus<float>, float> hs1(sd,vol, steps);
+	float call2, put2;
+	heston<NUM_SIMS, EuropeanBarrierOptionStatus<float>, float> hs2(sd,vol, steps);
+	float call3, put3;
+	heston<NUM_SIMS, EuropeanBarrierOptionStatus<float>, float> hs3(sd,vol, steps);
+	float call4, put4;
+	heston<NUM_SIMS, EuropeanBarrierOptionStatus<float>, float> hs4(sd,vol, steps);
+	float call5, put5;
+	heston<NUM_SIMS, EuropeanBarrierOptionStatus<float>, float> hs5(sd,vol, steps);
+	float call6, put6;
+	heston<NUM_SIMS, EuropeanBarrierOptionStatus<float>, float> hs6(sd,vol, steps);
+	float call7, put7;
+	heston<NUM_SIMS, EuropeanBarrierOptionStatus<float>, float> hs7(sd,vol, steps);
+	{
+#pragma HLS FUNCTION_EXTRACT
+#pragma HLS DATAFLOW
+		launchSimulation(call0, put0, g_id+0, hs0, 2*each_sims*steps, each_sims, steps);
+		launchSimulation(call1, put1, g_id+1, hs1, 2*each_sims*steps, each_sims, steps);
+		launchSimulation(call2, put2, g_id+2, hs2, 2*each_sims*steps, each_sims, steps);
+		launchSimulation(call3, put3, g_id+3, hs3, 2*each_sims*steps, each_sims, steps);
+		launchSimulation(call4, put4, g_id+4, hs4, 2*each_sims*steps, each_sims, steps);
+		launchSimulation(call5, put5, g_id+5, hs5, 2*each_sims*steps, each_sims, steps);
+		launchSimulation(call6, put6, g_id+6, hs6, 2*each_sims*steps, each_sims, steps);
+		launchSimulation(call7, put7, g_id+7, hs7, 2*each_sims*steps, each_sims, steps);
+	}
+	pCall[g_id]=(
+			call0
+			+call1
+			+call2
+			+call3
+			+call4
+			+call5
+			+call6
+			+call7
+			)/sims;
+
+	pPut[g_id]=(
+			put0
+			+put1
+			+put2
+			+put3
+			+put4
+			+put5
+			+put6
+			+put7
+			)/sims;
+
+#ifdef REPORT
+#include <iostream>
+	using namespace std;
+	cout << EuropeanBarrierOptionStatus<float>::giveup<<endl;
+#endif
 	return;
 }
 

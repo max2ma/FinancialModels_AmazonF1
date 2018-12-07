@@ -14,11 +14,6 @@ $(EXES)_SRCS=../main.cpp $(oclHelper_SRCS) $(xcl2_SRCS)
 $(EXES)_CXXFLAGS=-I$(COMMON_DIR) -DPLATFORM=\"$(PLATFORM)\" -DKERNEL=\"$(KERNEL_NAME)\" -DKERNEL_NAME=$(KERNEL_NAME) $(opencl_CXXFLAGS) $(xcl2_CXXFLAGS) $(oclHelper_CXXFLAGS) -std=c++0x -O3 
 $(EXES)_LDFLAGS=$(opencl_LDFLAGS) 
 $(EXES)_HDRS=$(xcl2_HDRS)
-ifeq ($(PROTOBUF),1)
-$(EXES)_SRCS+=$(COMMON_DIR)/bs.pb.cc 
-$(EXES)_CXXFLAGS+=-DUSE_PROTOBUF 
-$(EXES)_LDFLAGS+=-lprotobuf
-endif
 
 
 # Kernel
@@ -31,6 +26,7 @@ $(KERNEL_NAME)_XOS=$(KERNEL_NAME)
 XCLBINS=$(KERNEL_NAME)
 CLFLAGS=-I$(COMMON_DIR) -I. --kernel $(KERNEL_NAME) 
 CLFLAGS+=--xp "param:compiler.preserveHlsOutput=1" --xp "param:compiler.generateExtraRunData=true" -s 
+LDCLFLAGS+=--nk $(KERNEL_NAME):4 --jobs 8
 
 # check
 check_EXE=$(KERNEL_NAME)

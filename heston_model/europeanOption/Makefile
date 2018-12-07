@@ -32,7 +32,7 @@ $(KERNEL_NAME)_XOS=$(KERNEL_NAME)
 XCLBINS=$(KERNEL_NAME)
 CLFLAGS=-I$(COMMON_DIR) -I. --kernel $(KERNEL_NAME) 
 CLFLAGS+=--xp "param:compiler.preserveHlsOutput=1" --xp "param:compiler.generateExtraRunData=true" -s 
-LDCLFLAGS+=--nk $(KERNEL_NAME):16 --jobs 8
+LDCLFLAGS+=--nk $(KERNEL_NAME):4 --jobs 8
 
 # check
 check_EXE=$(KERNEL_NAME)

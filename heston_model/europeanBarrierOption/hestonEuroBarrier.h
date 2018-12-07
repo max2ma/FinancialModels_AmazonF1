@@ -48,15 +48,28 @@ class EuropeanBarrierOptionStatus{
 		}
 
 		void update(){
+			if(valid == false)
+				return;
 			if(stockPrice<bData.downBarrier || stockPrice>bData.upBarrier){
 				valid=false;
+#ifdef REPORT
+				giveup++;
+#endif
 			}
 		}
 		bool valid;
 		DATA_T stockPrice;
 		DATA_T volatility;
 		static barrierData<DATA_T> bData;
+#ifdef REPORT
+		static int giveup;
+#endif
 };
+
+#ifdef REPORT
+template<typename T>
+int EuropeanBarrierOptionStatus<T>::giveup = 0;
+#endif
 
 template<typename T>
 barrierData<T> EuropeanBarrierOptionStatus<T>::bData(0, 0);

@@ -24,14 +24,15 @@ endif
 
 # Kernel
 DEVICES=$(COMMON_REPO)/../../aws_platform/$(PLATFORM)/$(PLATFORM).xpfm
-$(KERNEL_NAME)_SRCS=$(KERNEL_NAME).cpp $(COMMON_DIR)/barrierData.cpp $(COMMON_DIR)/stockData.cpp $(COMMON_DIR)/volatilityData.cpp $(COMMON_DIR)/RNG.cpp
+$(KERNEL_NAME)_SRCS=$(KERNEL_NAME).cpp 
 XOS=$(KERNEL_NAME)
 
 $(KERNEL_NAME)_XOS=$(KERNEL_NAME)
 
 XCLBINS=$(KERNEL_NAME)
 CLFLAGS=-I$(COMMON_DIR) -I. --kernel $(KERNEL_NAME) 
-#CLFLAGS+=--xp "param:compiler.preserveHlsOutput=1" --xp "param:compiler.generateExtraRunData=true" -s 
+CLFLAGS+=--xp "param:compiler.preserveHlsOutput=1" --xp "param:compiler.generateExtraRunData=true" -s 
+LDCLFLAGS+=--nk $(KERNEL_NAME):6 --jobs 8
 
 # check
 check_EXE=$(KERNEL_NAME)

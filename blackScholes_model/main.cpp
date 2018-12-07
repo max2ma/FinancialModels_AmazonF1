@@ -50,18 +50,17 @@ limitations under the License.
 #include <cstring>
 #include <unistd.h>
 #include <ctime>
-#include "defTypes.h"
 #include "xcl2.hpp"
 
 using namespace std;
 
 namespace Params 
 {
-	double initprice = 100;		    // -s
-	double strikeprice = 110;			    // -k
-	double rate = 0.05;   		// -r
-	double volatility = 0.2;	// -v
-	double time = 1.0;			    // -t
+	float initprice = 100;		    // -s
+	float strikeprice = 110;			    // -k
+	float rate = 0.05;   		// -r
+	float volatility = 0.2;	// -v
+	float time = 1.0;			    // -t
 	const char *kernel_name=KERNEL;     // -n
 	const char *binary_name=KERNEL ".hw." PLATFORM ".awsxclbin";     // -a
 }
@@ -71,8 +70,9 @@ void usage(char* name)
 }
 int main(int argc, char** argv)
 {
-	int opt,NUM_CU=32, sims = 1024, steps=128;
-	double callR=-1, putR=-1;
+	int num_runs=16;
+	int opt, sims = 1024, steps=1024;
+	float callR=-1, putR=-1;
 	bool flagc=false,flagp=false;
 	while((opt=getopt(argc,argv,"b:c:p:n:s:k:"))!=-1){
 		switch(opt){
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
 				flagp=true;
 				break;
 			case 'n':
-				NUM_CU=atoi(optarg);
+				num_runs=atoi(optarg);
 				break;
 			case 's':
 				sims=atoi(optarg);
@@ -120,7 +120,7 @@ int main(int argc, char** argv)
 		} else if (line.substr(0, strlen("time:")) == "time:") {
 			Params::time = stod(line.substr(strlen("time:")+1));
 		} else if (line.substr(0, strlen("kernel_name:")) == "kernel_name:") {
-//			Params::kernel_name = line.substr(strlen("kernel_name:")+1).c_str();
+			//			Params::kernel_name = line.substr(strlen("kernel_name:")+1).c_str();
 		} else {
 			cerr << "Unknown parameter: " << line << endl;
 		}
@@ -133,8 +133,7 @@ int main(int argc, char** argv)
 		}
 		const string programString(istreambuf_iterator<char>(ifstr),
 				(istreambuf_iterator<char>()));
-//		static const int NUM_CU = 4;
-		vector<data_t,aligned_allocator<data_t>> h_call(NUM_CU), h_put(NUM_CU);
+		vector<float,aligned_allocator<float>> h_call(num_runs), h_put(num_runs);
 		vector<cl::Platform> platforms;
 		cl::Platform::get(&platforms);
 
@@ -161,25 +160,65 @@ int main(int argc, char** argv)
 		cl::Kernel kernel(program,Params::kernel_name);
 
 		cl::Buffer d_call(context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, 
-				sizeof(data_t)*NUM_CU, h_call.data());
+				sizeof(float)*num_runs, h_call.data());
 		cl::Buffer d_put(context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, 
-				sizeof(data_t)*NUM_CU, h_put.data());
+				sizeof(float)*num_runs, h_put.data());
 		std::vector<cl::Memory> outBufVec;
 		outBufVec.push_back(d_call);
 		outBufVec.push_back(d_put);
-		clock_t start = clock();
 		cout << "Starting execution. Time=" << Params::time
 			<< " rate=" << Params::rate 
 			<< " volatility =" << Params::volatility
 			<< " initprice=" << Params::initprice 
 			<< " strikeprice=" << Params::strikeprice 
+			<< " No. simulations="<<sims
+			<< " No. partitions="<<steps
 			<< endl;
-		cl::Event event[NUM_CU];
-		auto kernelFunctor = cl::KernelFunctor<cl::Buffer,cl::Buffer,data_t, data_t,data_t,data_t,data_t,data_t, data_t, data_t>(kernel);
+		
+		
+		auto kernelFunctor = cl::KernelFunctor<cl::Buffer,cl::Buffer,float, float,float,float,float,int, int, int>(kernel);
+		
 		cl::EnqueueArgs enqueueArgs(commandQueue,cl::NDRange(1),cl::NDRange(1));
-		for(int i=0;i<NUM_CU;i++){
-			event[i]= kernelFunctor(enqueueArgs, d_call,d_put, Params::time, Params::rate, Params::volatility, Params::initprice, Params::strikeprice, steps, sims, i);
+		
+		clock_t start = clock();
+		for(int i=0;i<num_runs;i++){
+			kernelFunctor(enqueueArgs, d_call,d_put, Params::time, Params::rate, Params::volatility, Params::initprice, Params::strikeprice, steps, sims, i);
 		}
+		/*
+		string info;
+		
+		for(int i=0;i<10;i++){
+			kernel.getArgInfo(i, CL_KERNEL_ARG_NAME, &info);
+			cout << "info of arg["<<i<<"] is " << info <<endl;
+			kernel.getArgInfo(i, CL_KERNEL_ARG_TYPE_NAME, &info);
+			cout << "type of arg["<<i<<"] is " << info <<endl;
+		}
+		int i_args=2;
+		
+		kernel.setArg(i_args++, Params::time);
+		
+		kernel.setArg(i_args++, Params::rate);
+
+		kernel.setArg(i_args++, Params::volatility);
+
+		kernel.setArg(i_args++, Params::initprice);
+
+		kernel.setArg(i_args++, Params::strikeprice);
+
+		kernel.setArg(i_args++, (float)sims);
+
+		kernel.setArg(i_args++, (float)steps);
+		
+		kernel.setArg(0, d_call);
+		
+		kernel.setArg(1, d_put);
+
+		for(int i=0;i<num_runs;i++){
+			kernel.setArg(i_args, (float)i);
+			commandQueue.enqueueTask(kernel);
+		}
+		*/
+
 		commandQueue.finish();
 
 
@@ -190,13 +229,13 @@ int main(int argc, char** argv)
 		cout << "Execution completed"<<endl;
 		cout << "Execution time "<< (float)t /CLOCKS_PER_SEC <<" s"<<endl;
 
-		data_t pCall=0, pPut=0;
-		for(int i=0;i<NUM_CU;i++){
+		float pCall=0, pPut=0;
+		for(int i=0;i<num_runs;i++){
 			pCall+= h_call[i];
 			pPut += h_put[i];
 		}
-		pCall/=NUM_CU*expf(Params::rate*Params::time);
-		pPut/=NUM_CU*expf(Params::rate*Params::time);
+		pCall/=num_runs*expf(Params::rate*Params::time);
+		pPut/=num_runs*expf(Params::rate*Params::time);
 		cout<<"the call price is: "<<pCall<<'\t';
 		if(flagc) {
 			cout<<"the difference with the reference value is "<<fabs(pCall/callR-1)*100<<'%';
