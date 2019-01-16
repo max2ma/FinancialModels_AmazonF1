@@ -77,6 +77,7 @@ class heston
 		}
 	}
 	void execute(DATA_T &price, DATA_T &call, DATA_T &put){
+#pragma HLS INLINE
 		float payoff = price-data.strikePrice;
 		if(payoff >0){
 			call+= payoff;

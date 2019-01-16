@@ -5,6 +5,10 @@
 	template<typename DATA_T>
 void prng(RNG<DATA_T> &rng0,RNG<DATA_T> &rng1, hls::stream<unsigned int> &sRNG0,hls::stream<unsigned int> &sRNG1, int nums){
 	for(int i = 0 ; i < nums>>2;i++){
+#pragma HLS DEPENDENCE variable=rng1.mt_o inter RAW false
+#pragma HLS DEPENDENCE variable=rng1.mt_e inter RAW false
+#pragma HLS DEPENDENCE variable=rng0.mt_o inter RAW false
+#pragma HLS DEPENDENCE variable=rng0.mt_e inter RAW false
 #pragma HLS PIPELINE
 		unsigned int r0, r1, r2, r3;
 		rng0.extract_number(&r0, &r1);
@@ -33,11 +37,11 @@ void launchSim(DATA_T &pCall, DATA_T &pPut, RNG<DATA_T> &rng0,RNG<DATA_T> &rng1,
 
 	m.simulation(sRNG0,sRNG1, sims, pCall, pPut);
 }
-	template<typename DATA_T, int SEED_STRIDE=1024, typename Model>
+	template<typename DATA_T, typename Model>
 void launchSimulation(DATA_T &pCall, DATA_T &pPut, int seed, Model &m, int numR, int sims){
 #pragma HLS INLINE off
 #pragma HLS ALLOCATION instances=mul limit=1 operation
-	RNG<float> rng0(seed*SEED_STRIDE);
-	RNG<float> rng1(seed*SEED_STRIDE + 1);
+	RNG<float> rng0(seed);
+	RNG<float> rng1((seed << 5) ^ (31));
 	launchSim(pCall, pPut, rng0, rng1, m, numR, sims);
 }

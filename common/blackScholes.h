@@ -62,7 +62,7 @@ class blackScholes
 
 		for(int k=0;k<sims/NUM_SIMS;k++) {
 			for(int s=0; s <NUM_STEPS;s++){
-				for(int j=0;j<NUM_SIMS/2;j++) {
+				for(int j=0;j<(NUM_SIMS>>1);j++) {
 #pragma HLS PIPELINE
 					DATA_T r0 = s_RNG0.read();
 					DATA_T r1 = s_RNG1.read();
