@@ -80,51 +80,23 @@ rho | covariance
 upb | upper bound on price 
 lowb | lower bound on price 
 
-## Performance on Amazon F1 FPGA
+## Performance on PYNQ-Z2 platform
 
-Target frequency is 250MHz. 
-Target device is 'xcvu9p-flgb2104-2-i'
+Target frequency is 150MHz. 
+Target device is ZYNQ Z0702
 
-| Model | Option | N. random number generators | N. simulations | N. simulation groups | N. steps   | Time C5 CPU [s] | Time F1 CPU [s] | Time F1 FPGA [s] | LUT | LUTMem | REG | BRAM | DSP | 
-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|
-| Black-Scholes | European option  |64|512| 1024|  1 | 125 |114|0.23|31% |2%|15% |26% |43%|
-| Black-Scholes | Asian option     |64|512|65536|256 | 376 |497|0.83|31% |2%|16% |26% |43%|
-| Heston | European option         |32|512|  512|256 | 226 |330|1.52|18% |2%| 9% |11% |26%|
-| Heston | European barrier option |32|512|  512|256 | 32 | 40|0.75|18% |2%| 9% |11% |26%|
-
-The results on the CPUs use a single thread. For n threads with independent resources, the speedup would be exactly n, since Monte Carlo simulations are completely independent.
+| Model | Option | N. random number generators | N. simulations | N. steps   | Time F1 FPGA [s] | LUT | LUTMem | REG | BRAM | DSP | 
+|-|-|-|-|-|-|-|-|-|-|-|
+| Black-Scholes | European option  |2|65536| 1024 |0.118|45% |11%| 35% |10% |70%|
+| Black-Scholes | Asian option     |2|65536| 1024 |0.117|47% |11%| 36% |13% |68%|
+| Heston | European option         |2|65536| 1024 |0.225|49% |15%| 40% |10% |75%|
+| Heston | European barrier option |2|65536| 1024 |0.225|50% |15%| 41% |10% |74%|
 
 ## Further information and recompilation
 
 Further informations about the optimizations used in this implementation can be found in the paper [High Performance and Low Power Monte Carlo Methods to Option Pricing Models via High Level Design and Synthesis](http://ieeexplore.ieee.org/abstract/document/7920245/).
 
-In all cases, the enclosed Makefile can be used to compile the models. For example:
-  ```
-  cd blackScholes_model/europeanOption
-  source <path to SDSoc v2017.1>/.settings64-SDx.sh
-  export SDACCEL_DIR=<path to aws-fpga>/SDAccel
-  export COMMON_REPO=$SDACCEL_DIR/examples/xilinx/
-  export PLATFORM=xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0
-  export AWS_PLATFORM=$SDACCEL_DIR/aws_platform/xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0/xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0.xpfm
-  make TARGETS=hw DEVICES=$AWS_PLATFORM all
-  ```
-compiles the code and generates the F1-targeted bitstream for the European option of the Black-Scholes model. Environment variable ```COMMON_REPO``` must point to the ```examples/xilinx``` sub-directory of the folder where the AWS development kit github has been checked out.
 
-For purely SW execution, a target ```pure_c``` has been added to the Makefiles. It compiles the main and the kernel using purely C++ and runs it on the local CPU.
-
-Note that, for the sake of efficient implementation on the FPGA, the simulation parameters which directly affect the amount of parallelism in the implementation are set as compile-time constants in ```blackScholes.cpp```, ```hestonEuro.h``` and ```hestonEuroBarrier.h``` respectively. They are listed below and can be changed by recompiling the kernels and re-generating the AFI.
-
-Parameter |  information
-:-------- | :---
-NUM_STEPS    | number of time steps
-NUM_RNGS | number of RNGs running in parallel, proportional to the area cost
-NUM_SIMS   | number of simulations running in parallel for a given RNG (512 ensures a good BRAM usage on a typical FPGA)
-NUM_SIMGROUPS  | number of simulation groups (each with ![$NUM\_RNG \cdot NUM\_SIMS$] simulations) running in pipeline, proportional to the execution time
-
-See also these repositories for more information about the compilation and optimization of the kernels:
-  - the European and the Asian options of the the [Black-Scholes model](https://github.com/KitAway/BlackScholes_MonteCarlo), 
-  - the European and the European barrier options the [Heston model](https://github.com/KitAway/HestonModel_MonteCarlo). 
-  
 [option]: https://en.wikipedia.org/wiki/Option_style
 [exotic options]: https://en.wikipedia.org/wiki/Exotic_option
 [Black-Scholes Model]: https://en.wikipedia.org/wiki/Black%E2%80%93Scholes_model
