@@ -85,7 +85,7 @@ lowb | lower bound on price
 Target frequency is 150MHz. 
 Target device is ZYNQ Z0702
 
-| Model | Option | N. random number generators | N. simulations | N. steps   | Time F1 FPGA [s] | LUT | LUTMem | REG | BRAM | DSP | 
+| Model | Option | N. random number generators | N. simulations | N. steps   | Time PYNQ FPGA [s] | LUT | LUTMem | REG | BRAM | DSP | 
 |-|-|-|-|-|-|-|-|-|-|-|
 | Black-Scholes | European option  |2|65536| 1024 |0.118|45% |11%| 35% |10% |70%|
 | Black-Scholes | Asian option     |2|65536| 1024 |0.117|47% |11%| 36% |13% |68%|
