@@ -81,7 +81,7 @@ Target frequency is 250MHz.
 Target device is 'xcvu9p-flgb2104-2-i'
 
 | Model | Option | N. threads | N. simulations | N. simulation groups | N. steps   | Time F1 CPU [s] | Time F1 FPGA [ms] | LUT | LUTMem | REG | BRAM | DSP | 
-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|
+|-|-|-|-|-|-|-|-|-|-|-|-|-|
 | Black-Scholes | European option  |64|65536| 32|1024 | 3.56 |2.84|66% |7%|38% |23% |71%|
 | Black-Scholes | Asian option     |64|65536| 32|1024 | 3.88 |2.81|70% |8%|42% |31% |80%|
 | Heston | European option         |52|65536| 64|1024 | 5.16 |7.2 |62% |8%| 37% |20% |77%|
