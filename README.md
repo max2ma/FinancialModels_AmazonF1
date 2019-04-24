@@ -33,18 +33,23 @@ Two styles of stock transaction [options][option] are considered in this impleme
 [Call options][Call options] and [put options][put options] are defined reciprocally. Given the basic parameters for an option, namely expiration date and strike price, the call/put payoff price can be estimated as discussed in [this article][Heston model].
 
 ## Usage
-
-### Black-Scholes models
-
-Examples of usage for the European and Asian options:
+### Build the project
+In any directory such as
   ```
-  > blackeuro 
-  > blackasian 
+  > cd FinancialModels_AmazonF1/blackScholes_model/europeanOption/
+  > make TARGETS=hw PLATFORM=$PLATFORM all 
   ```
-  
+### Upload to AWS
+See repo https://github.com/aws/aws-fpga/tree/master/SDAccel
+### Run the application
+Examples of usage for the European and Asian options by BlackSchole model:
+  ```
+  > blackeuro -b <binary_file_name> [-n number_of_repeat] [-s number_of_simulation] [-k number_of_time_partition] [-c expect_call_price] [-p expect_put_price] 
+  > blackasian -b <binary_file_name> [-n number_of_repeat] [-s number_of_simulation] [-k number_of_time_partition] [-c expect_call_price] [-p expect_put_price] 
+  ```
 The outputs of both commands are the expected call and put prices. The ```-b <binary_file_name>``` option can be used to specify a binary file name different from the default ```<kernel_name>.hw.xilinx_xil-accel-rd-ku115_4ddr-xpr.awsxclbin```
 
-The model parameters are specified in a file (in protobuf form) called ```blackEuro.parameters``` and ```blackAsian.parameters``` respectively. The meaning of the parameters is as follows.
+The model parameters are specified in a file called ```blackEuro.parameters``` and ```blackAsian.parameters``` respectively. The meaning of the parameters is as follows.
 
 Parameter |  Meaning 
 :-------- | :---
@@ -55,16 +60,6 @@ initprice	 |  initial price of the stock
 strikeprice       |  strike price for the option 
 
 ### Heston models
-
-Examples of usage for European and European with barrier options:
-  ```
-  > hestoneuro 
-  > hestoneurobarrier
-  ```
-
-The outputs of both commands are the expected call and put prices. The ```-b <binary_file_name>``` option can be used to specify a binary file name different from the default ```<kernel_name>.hw.xilinx_xil-accel-rd-ku115_4ddr-xpr.awsxclbin```
-
-The model parameters are specified in a file (in protobuf form) called ```hestonEuro.parameters``` and ```hestonEuroBarrier.parameters``` respectively. The meaning of the parameters is as follows (see also [this article][Heston Model] for more details).
 
 Parameter |  Meaning 
 :-------- | :---
@@ -85,46 +80,15 @@ lowb | lower bound on price
 Target frequency is 250MHz. 
 Target device is 'xcvu9p-flgb2104-2-i'
 
-| Model | Option | N. random number generators | N. simulations | N. simulation groups | N. steps   | Time C5 CPU [s] | Time F1 CPU [s] | Time F1 FPGA [s] | LUT | LUTMem | REG | BRAM | DSP | 
-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|
-| Black-Scholes | European option  |64|512| 1024|  1 | 125 |114|0.23|31% |2%|15% |26% |43%|
-| Black-Scholes | Asian option     |64|512|65536|256 | 376 |497|0.83|31% |2%|16% |26% |43%|
-| Heston | European option         |32|512|  512|256 | 226 |330|1.52|18% |2%| 9% |11% |26%|
-| Heston | European barrier option |32|512|  512|256 | 32 | 40|0.75|18% |2%| 9% |11% |26%|
+| Model | Option | N. threads | N. simulations | N. simulation groups | N. steps   | Time F1 CPU [s] | Time F1 FPGA [ms] | LUT | LUTMem | REG | BRAM | DSP | 
+|-|-|-|-|-|-|-|-|-|-|-|-|-|
+| Black-Scholes | European option  |64|65536| 32|1024 | 3.56 |2.84|66% |7%|38% |23% |71%|
+| Black-Scholes | Asian option     |64|65536| 32|1024 | 3.88 |2.81|70% |8%|42% |31% |80%|
+| Heston | European option         |52|65536| 64|1024 | 5.16 |7.2 |62% |8%| 37% |20% |77%|
+| Heston | European barrier option |52|65536| 64|1024 | 1.25 |6.4 |63% |9%| 39% |20% |77%|
 
 The results on the CPUs use a single thread. For n threads with independent resources, the speedup would be exactly n, since Monte Carlo simulations are completely independent.
-
-## Further information and recompilation
-
-Further informations about the optimizations used in this implementation can be found in the paper [High Performance and Low Power Monte Carlo Methods to Option Pricing Models via High Level Design and Synthesis](http://ieeexplore.ieee.org/abstract/document/7920245/).
-
-In all cases, the enclosed Makefile can be used to compile the models. For example:
-  ```
-  cd blackScholes_model/europeanOption
-  source <path to SDSoc v2017.1>/.settings64-SDx.sh
-  export SDACCEL_DIR=<path to aws-fpga>/SDAccel
-  export COMMON_REPO=$SDACCEL_DIR/examples/xilinx/
-  export PLATFORM=xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0
-  export AWS_PLATFORM=$SDACCEL_DIR/aws_platform/xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0/xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0.xpfm
-  make TARGETS=hw DEVICES=$AWS_PLATFORM all
-  ```
-compiles the code and generates the F1-targeted bitstream for the European option of the Black-Scholes model. Environment variable ```COMMON_REPO``` must point to the ```examples/xilinx``` sub-directory of the folder where the AWS development kit github has been checked out.
-
-For purely SW execution, a target ```pure_c``` has been added to the Makefiles. It compiles the main and the kernel using purely C++ and runs it on the local CPU.
-
-Note that, for the sake of efficient implementation on the FPGA, the simulation parameters which directly affect the amount of parallelism in the implementation are set as compile-time constants in ```blackScholes.cpp```, ```hestonEuro.h``` and ```hestonEuroBarrier.h``` respectively. They are listed below and can be changed by recompiling the kernels and re-generating the AFI.
-
-Parameter |  information
-:-------- | :---
-NUM_STEPS    | number of time steps
-NUM_RNGS | number of RNGs running in parallel, proportional to the area cost
-NUM_SIMS   | number of simulations running in parallel for a given RNG (512 ensures a good BRAM usage on a typical FPGA)
-NUM_SIMGROUPS  | number of simulation groups (each with ![$NUM\_RNG \cdot NUM\_SIMS$] simulations) running in pipeline, proportional to the execution time
-
-See also these repositories for more information about the compilation and optimization of the kernels:
-  - the European and the Asian options of the the [Black-Scholes model](https://github.com/KitAway/BlackScholes_MonteCarlo), 
-  - the European and the European barrier options the [Heston model](https://github.com/KitAway/HestonModel_MonteCarlo). 
-  
+ 
 [option]: https://en.wikipedia.org/wiki/Option_style
 [exotic options]: https://en.wikipedia.org/wiki/Exotic_option
 [Black-Scholes Model]: https://en.wikipedia.org/wiki/Black%E2%80%93Scholes_model
