@@ -4,6 +4,31 @@ This repository includes F1-optimized implementations of four Monte Carlo financ
   - the European and the Asian options of the the [Black-Scholes model][Black-Scholes Model], 
   - the European and the European barrier options of the [Heston model][Heston Model]. 
 
+Further details can be found in the following paper. If you find this work useful for your research, please consider citing:
+  
+      @INPROCEEDINGS{7920245, 
+        author={L. Ma and F. B. Muslim and L. Lavagno}, 
+        booktitle={2016 European Modelling Symposium (EMS)}, 
+        title={High Performance and Low Power Monte Carlo Methods to Option Pricing Models via High Level Design and Synthesis}, 
+        year={2016},
+        pages={157-162}, 
+        doi={10.1109/EMS.2016.036}, 
+        month={Nov},
+        }
+      
+      
+ Or
+    
+    @ARTICLE{7859319, 
+        author={F. B. Muslim and L. Ma and M. Roozmeh and L. Lavagno}, 
+        journal={IEEE Access}, 
+        title={Efficient FPGA Implementation of OpenCL High-Performance Computing Applications via High-Level Synthesis}, 
+        year={2017}, 
+        volume={5}, 
+        pages={2747-2762}, 
+        doi={10.1109/ACCESS.2017.2671881}, 
+        }
+    
 ## Theory
 
 ### Black-Scholes Model

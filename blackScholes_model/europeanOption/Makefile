@@ -1,3 +1,4 @@
+COMMON_REPO:=$(AWS_FPGA_REPO_DIR)/SDAccel/examples/xilinx/
 COMMON_DIR:=../../common
 PROFILE:=yes
 #Common Includes
