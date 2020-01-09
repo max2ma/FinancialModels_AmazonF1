@@ -15,8 +15,8 @@ void blackEuro(T* calls, T *puts,
         T rate,
         T volatility,
         T time,
-        int partitions = 1024,
-        int paths = 65536){
+        int partitions,
+        int paths){
     T Dt=time/partitions;
 
     const T ratio=exp(-rate*time);
@@ -39,9 +39,9 @@ void blackEuro(T* calls, T *puts,
             prices2*=1.0f + rate*Dt+num2*volDt;
 #endif
         }
-        calls[sim] += ratio*fmax(prices1- strike,0.0f);
-        calls[sim] += ratio*fmax(prices2- strike,0.0f);
-        puts[sim] += ratio*fmax(strike - prices1,0.0f);
-        puts[sim] += ratio*fmax(strike - prices2,0.0f);
+        calls[sim] = ratio*fmax(prices1- strike,0.0f);
+        calls[sim + 1] = ratio*fmax(prices2- strike,0.0f);
+        puts[sim] = ratio*fmax(strike - prices1,0.0f);
+        puts[sim + 1] = ratio*fmax(strike - prices2,0.0f);
     }
 }
