@@ -12,7 +12,7 @@ run: ${EXE}
 	@./$(EXE) 65536 1024 4
 
 $(EXE) :$(SRCS)
-	$(GXX) $(HDRS) $(CFLAGS) -o $@ $^ 
+	@$(GXX) $(HDRS) $(CFLAGS) -o $@ $^ 
 
 clean:
 	@if [ -f $(EXE) ]; then rm $(EXE); fi 
