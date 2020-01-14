@@ -7,9 +7,12 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
+    if(argc < 3) return -1;
+    int nargs = 0;
+    int paths = atoi(argv[++nargs]);
+    int partitions = atoi(argv[++nargs]);
+    int num_cpus = atoi(argv[++nargs]);
     srand(time(NULL));
-    int paths = 65536;
-    int partitions = 1024;
     const float time = 1.0f,
           rate = 0.0319f,
           volatility = 0.010201f,

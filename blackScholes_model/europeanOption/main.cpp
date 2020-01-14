@@ -2,16 +2,24 @@
 #include <ctime>
 #include <ctime>
 #include <chrono>
+#include "omp.h"
 #include "blackEuro.h"
 using namespace std;
 
 int main(int argc, char** argv)
 {
-    int paths = 65536;
-    int partitions = 4096;
+    if(argc < 3) return -1;
+    int nargs = 0;
+    int paths = atoi(argv[++nargs]);
+    int partitions = atoi(argv[++nargs]);
+    int num_cpus = atoi(argv[++nargs]);
+    omp_set_dynamic(0);
+    omp_set_num_threads(num_cpus);
+
     float *calls = new float[paths];
     float *puts = new float[paths];
     srand(time(NULL));
+
     auto start  = chrono::high_resolution_clock::now();
 
     blackEuro<float>(calls, puts, 100, 110, 0.05, 0.2, 1, partitions, paths);

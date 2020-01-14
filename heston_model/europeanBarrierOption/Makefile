@@ -9,7 +9,7 @@ CFLAGS=-I ../../common/ -O2 -fopenmp -std=c++11
 EXE=run_$(KERNEL_NAME)
 
 run: ${EXE}
-	./$(EXE)
+	@./$(EXE) 65536 1024 4
 
 $(EXE) :$(SRCS)
 	$(GXX) $(HDRS) $(CFLAGS) -o $@ $^ 
