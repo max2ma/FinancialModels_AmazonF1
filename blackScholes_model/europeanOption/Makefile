@@ -8,8 +8,12 @@ CFLAGS=-I ../../common/ -O2 -fopenmp -std=c++11
 
 EXE=run_$(KERNEL_NAME)
 
+PATHS=65536
+PARTS=1024
+CPUS=4
+
 run: ${EXE}
-	@./$(EXE) 65536 1024 4
+	@./$(EXE) ${PATHS} ${PARTS} ${CPUS}
 
 $(EXE) :$(SRCS)
 	@$(GXX) $(HDRS) $(CFLAGS) -o $@ $^ 
