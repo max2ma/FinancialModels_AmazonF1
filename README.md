@@ -105,15 +105,14 @@ lowb | lower bound on price
 Target frequency is 250MHz. 
 Target device is 'xcvu9p-flgb2104-2-i'
 
-| Model | Option | N. threads | N. simulations | N. simulation groups | N. steps   | Time F1 CPU [s] | Time F1 FPGA [ms] | LUT | LUTMem | REG | BRAM | DSP | 
+| Model | Option | N. threads | N. simulations | N. simulation groups | N. steps   | Time C5 96-core CPU [ms] | Time F1 FPGA [ms] | LUT | LUTMem | REG | BRAM | DSP | 
 |-|-|-|-|-|-|-|-|-|-|-|-|-|
-| Black-Scholes | European option  |64|65536| 32|1024 | 3.56 |2.84|66% |7%|38% |23% |71%|
-| Black-Scholes | Asian option     |64|65536| 32|1024 | 3.88 |2.81|70% |8%|42% |31% |80%|
-| Heston | European option         |52|65536| 64|1024 | 5.16 |7.2 |62% |8%| 37% |20% |77%|
-| Heston | European barrier option |52|65536| 64|1024 | 1.25 |6.4 |63% |9%| 39% |20% |77%|
+| Black-Scholes | European option  |64|65536| 32|1024 | 23.75 |2.84|66% |7%|38% |23% |71%|
+| Black-Scholes | Asian option     |64|65536| 32|1024 | 25 |2.81|70% |8%|42% |31% |80%|
+| Heston | European option         |52|65536| 64|1024 | 56.67 |7.2 |62% |8%| 37% |20% |77%|
+| Heston | European barrier option |52|65536| 64|1024 | 36.25 |6.4 |63% |9%| 39% |20% |77%|
 
-The results on the CPUs use a single thread. For n threads with independent resources, the speedup would be exactly n, since Monte Carlo simulations are completely independent.
- 
+
 [option]: https://en.wikipedia.org/wiki/Option_style
 [exotic options]: https://en.wikipedia.org/wiki/Exotic_option
 [Black-Scholes Model]: https://en.wikipedia.org/wiki/Black%E2%80%93Scholes_model
